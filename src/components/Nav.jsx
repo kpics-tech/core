@@ -1,7 +1,6 @@
 const TABS = [
   { key: 'dashboard', label: 'ホーム' },
   { key: 'agendas', label: '議題' },
-  { key: 'meetings', label: '会議' },
   { key: 'decisions', label: '決定' },
   { key: 'todos', label: 'ToDo' },
   { key: 'workload', label: '負担' },

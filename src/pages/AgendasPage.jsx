@@ -22,7 +22,7 @@ export default function AgendasPage() {
   async function load() {
     setLoading(true)
     const [{ data: a }, { data: m }] = await Promise.all([
-      supabase.from('agendas').select('*').order('created_at', { ascending: false }),
+      supabase.from('agendas').select('*').neq('status', 'decided').order('created_at', { ascending: false }),
       supabase.from('members').select('*').order('name'),
     ])
     setAgendas(a || [])
@@ -67,10 +67,12 @@ export default function AgendasPage() {
     load()
   }
 
-  const grouped = AGENDA_STATUS.map((s) => ({
-    status: s,
-    items: agendas.filter((a) => a.status === s),
-  })).filter((g) => g.items.length > 0)
+  const grouped = AGENDA_STATUS
+    .filter((s) => s !== 'decided')
+    .map((s) => ({
+      status: s,
+      items: agendas.filter((a) => a.status === s),
+    })).filter((g) => g.items.length > 0)
 
   return (
     <div style={styles.wrap}>
