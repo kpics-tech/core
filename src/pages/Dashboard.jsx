@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabaseClient'
+import Announcements from '../components/Announcements'
 
 export default function Dashboard({ onNavigate }) {
   const { logout } = useAuth()
@@ -45,6 +46,8 @@ export default function Dashboard({ onNavigate }) {
       <button onClick={() => onNavigate('workload')} style={{ ...cardStyle, width: '100%', textAlign: 'left' }}>
         <div style={cardLabel}>負担バランスを見る →</div>
       </button>
+
+      <Announcements />
     </div>
   )
 }

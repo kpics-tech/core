@@ -7,6 +7,7 @@ export default function AgendasPage() {
   const [members, setMembers] = useState([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
+  const [openId, setOpenId] = useState(null)
 
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
@@ -55,13 +56,9 @@ export default function AgendasPage() {
     load()
   }
 
-  async function changeStatus(id, status) {
-    await supabase.from('agendas').update({ status }).eq('id', id)
-    load()
-  }
-
   async function promoteIdea(id) {
-    await changeStatus(id, 'undiscussed')
+    await supabase.from('agendas').update({ status: 'undiscussed' }).eq('id', id)
+    load()
   }
 
   async function removeAgenda(id) {
@@ -137,36 +134,122 @@ export default function AgendasPage() {
             </div>
             <div style={styles.list}>
               {g.items.map((a) => (
-                <div key={a.id} style={styles.card}>
-                  <div style={styles.cardTop}>
-                    <div style={styles.cardTitle}>{a.title}</div>
-                    <button onClick={() => removeAgenda(a.id)} style={styles.removeBtn}>削除</button>
-                  </div>
-                  {a.content && <div style={styles.cardContent}>{a.content}</div>}
-                  <div style={styles.meta}>
-                    提案: {memberName(a.proposer_id)}
-                    {a.assignee_id && ` ・ 担当: ${memberName(a.assignee_id)}`}
-                    {' ・ 優先度'}{PRIORITY_META[a.priority].label}
-                    {a.estimated_minutes && ` ・ ${a.estimated_minutes}分`}
-                    {a.discussion_deadline && ` ・ 〆${a.discussion_deadline}`}
-                    {a.tags && ` ・ #${a.tags}`}
-                  </div>
-                  <div style={styles.statusRow}>
-                    {a.status === 'idea' ? (
-                      <button onClick={() => promoteIdea(a.id)} style={styles.promoteBtn}>議題に昇格 →</button>
-                    ) : (
-                      <select value={a.status} onChange={(e) => changeStatus(a.id, e.target.value)} style={styles.statusSelect}>
-                        {AGENDA_STATUS.map((s) => (
-                          <option key={s} value={s}>{AGENDA_STATUS_META[s].emoji} {AGENDA_STATUS_META[s].label}</option>
-                        ))}
-                      </select>
-                    )}
-                  </div>
-                </div>
+                <AgendaCard
+                  key={a.id}
+                  agenda={a}
+                  members={members}
+                  memberName={memberName}
+                  isOpen={openId === a.id}
+                  onToggle={() => setOpenId(openId === a.id ? null : a.id)}
+                  onPromoteIdea={() => promoteIdea(a.id)}
+                  onRemove={() => removeAgenda(a.id)}
+                  onChanged={() => { load(); setOpenId(null) }}
+                />
               ))}
             </div>
           </div>
         ))
+      )}
+    </div>
+  )
+}
+
+function AgendaCard({ agenda: a, members, memberName, isOpen, onToggle, onPromoteIdea, onRemove, onChanged }) {
+  const [discussion, setDiscussion] = useState('')
+  const [alsoTodo, setAlsoTodo] = useState(false)
+  const [todoAssignee, setTodoAssignee] = useState(a.assignee_id || '')
+  const [todoDue, setTodoDue] = useState('')
+
+  const canDiscuss = a.status !== 'idea' && a.status !== 'decided' && a.status !== 'rejected'
+
+  async function decide(e) {
+    e.preventDefault()
+    const content = discussion.trim() || a.content || a.title
+    const { data: decision } = await supabase
+      .from('decisions')
+      .insert({ agenda_id: a.id, content })
+      .select().single()
+    await supabase.from('agendas').update({ status: 'decided' }).eq('id', a.id)
+    if (alsoTodo && decision) {
+      await supabase.from('todos').insert({
+        title: content,
+        assignee_id: todoAssignee || null,
+        due_date: todoDue || null,
+        source_decision_id: decision.id,
+      })
+    }
+    onChanged()
+  }
+
+  async function hold() {
+    await supabase.from('agendas').update({ status: 'pending' }).eq('id', a.id)
+    onChanged()
+  }
+
+  async function reject() {
+    await supabase.from('agendas').update({ status: 'rejected' }).eq('id', a.id)
+    onChanged()
+  }
+
+  return (
+    <div style={styles.card}>
+      <button
+        onClick={() => (canDiscuss ? onToggle() : null)}
+        style={{ ...styles.cardTop, cursor: canDiscuss ? 'pointer' : 'default', background: 'transparent', border: 'none', width: '100%', textAlign: 'left', padding: 0 }}
+      >
+        <div style={{ flex: 1 }}>
+          <div style={styles.cardTitle}>{a.title}</div>
+          {a.content && <div style={styles.cardContent}>{a.content}</div>}
+          <div style={styles.meta}>
+            提案: {memberName(a.proposer_id)}
+            {a.assignee_id && ` ・ 担当: ${memberName(a.assignee_id)}`}
+            {' ・ 優先度'}{PRIORITY_META[a.priority].label}
+            {a.estimated_minutes && ` ・ ${a.estimated_minutes}分`}
+            {a.discussion_deadline && ` ・ 〆${a.discussion_deadline}`}
+            {a.tags && ` ・ #${a.tags}`}
+          </div>
+        </div>
+      </button>
+
+      <div style={styles.cardFooter}>
+        {a.status === 'idea' ? (
+          <button onClick={onPromoteIdea} style={styles.promoteBtn}>議題に昇格 →</button>
+        ) : canDiscuss ? (
+          <button onClick={onToggle} style={styles.discussBtn}>
+            {isOpen ? '閉じる' : '💬 話し合った内容を記録する'}
+          </button>
+        ) : null}
+        <button onClick={onRemove} style={styles.removeBtn}>削除</button>
+      </div>
+
+      {isOpen && canDiscuss && (
+        <form onSubmit={decide} style={styles.decideForm}>
+          <textarea
+            placeholder="何を話し合って、何が決まったか"
+            value={discussion}
+            onChange={(e) => setDiscussion(e.target.value)}
+            style={styles.notesInput}
+            autoFocus
+          />
+          <label style={styles.checkboxLabel}>
+            <input type="checkbox" checked={alsoTodo} onChange={(e) => setAlsoTodo(e.target.checked)} />
+            ToDoも同時に作る
+          </label>
+          {alsoTodo && (
+            <div style={styles.row2}>
+              <select value={todoAssignee} onChange={(e) => setTodoAssignee(e.target.value)} style={styles.smallInput}>
+                <option value="">担当者</option>
+                {members.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+              </select>
+              <input type="date" value={todoDue} onChange={(e) => setTodoDue(e.target.value)} style={styles.smallInput} />
+            </div>
+          )}
+          <div style={styles.actionRow}>
+            <button type="submit" style={styles.decideBtn}>✅ 決定事項にする</button>
+            <button type="button" onClick={hold} style={styles.ghostBtn}>⏸ 保留</button>
+            <button type="button" onClick={reject} style={styles.ghostBtnDanger}>❌ 却下</button>
+          </div>
+        </form>
       )}
     </div>
   )
@@ -190,6 +273,10 @@ const styles = {
     background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '8px',
     padding: '10px 12px', color: 'var(--text)', fontSize: '14px', width: '100%', flex: 1,
   },
+  smallInput: {
+    flex: 1, background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '8px',
+    padding: '8px 10px', color: 'var(--text)', fontSize: '13px',
+  },
   checkboxLabel: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--text-muted)', margin: '4px 0' },
   submitBtn: {
     background: 'var(--accent)', color: '#03181c', border: 'none', borderRadius: '8px',
@@ -209,13 +296,13 @@ const styles = {
     background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '10px', padding: '14px',
   },
   cardTop: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' },
-  cardTitle: { fontSize: '15px', fontWeight: 500 },
+  cardTitle: { fontSize: '15px', fontWeight: 500, color: 'var(--text)' },
   cardContent: { fontSize: '13px', color: 'var(--text-muted)', marginTop: '6px', lineHeight: 1.6 },
   meta: { fontSize: '12px', color: 'var(--text-muted)', marginTop: '8px', lineHeight: 1.6 },
-  statusRow: { marginTop: '10px' },
-  statusSelect: {
-    background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '8px',
-    padding: '6px 10px', color: 'var(--text)', fontSize: '13px',
+  cardFooter: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', gap: '8px' },
+  discussBtn: {
+    background: 'transparent', border: '1px solid var(--accent)', color: 'var(--accent)',
+    borderRadius: '8px', padding: '7px 12px', fontSize: '12px', cursor: 'pointer',
   },
   promoteBtn: {
     background: 'transparent', border: '1px solid var(--accent-2)', color: 'var(--accent-2)',
@@ -224,5 +311,23 @@ const styles = {
   removeBtn: {
     background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-muted)',
     borderRadius: '8px', padding: '5px 9px', fontSize: '11px', cursor: 'pointer', flexShrink: 0,
+  },
+  decideForm: { marginTop: '12px', paddingTop: '12px', borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '8px' },
+  notesInput: {
+    width: '100%', background: 'var(--bg)', border: '1px solid var(--border)',
+    borderRadius: '8px', padding: '10px 12px', color: 'var(--text)', fontSize: '13px', minHeight: '70px', resize: 'vertical',
+  },
+  actionRow: { display: 'flex', gap: '8px', flexWrap: 'wrap' },
+  decideBtn: {
+    background: 'var(--accent)', color: '#03181c', border: 'none',
+    borderRadius: '8px', padding: '8px 14px', fontSize: '12px', fontWeight: 600, cursor: 'pointer',
+  },
+  ghostBtn: {
+    background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-muted)',
+    borderRadius: '8px', padding: '7px 12px', fontSize: '12px', cursor: 'pointer',
+  },
+  ghostBtnDanger: {
+    background: 'transparent', border: '1px solid var(--danger)', color: 'var(--danger)',
+    borderRadius: '8px', padding: '7px 12px', fontSize: '12px', cursor: 'pointer',
   },
 }
