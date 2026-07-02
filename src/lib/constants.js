@@ -15,3 +15,5 @@ export const PRIORITY_META = {
   normal: { label: '中' },
   high: { label: '高' },
 }
+
+export const SHARED_DRIVE_URL = 'https://drive.google.com/drive/folders/1hi3t0U9-n8LnSQyQCBmx3ICaBQMOTYO4'

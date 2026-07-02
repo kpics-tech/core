@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabaseClient'
 import Announcements from '../components/Announcements'
+import { SHARED_DRIVE_URL } from '../lib/constants'
 
 export default function Dashboard({ onNavigate }) {
   const { logout } = useAuth()
@@ -46,6 +47,16 @@ export default function Dashboard({ onNavigate }) {
       <button onClick={() => onNavigate('workload')} style={{ ...cardStyle, width: '100%', textAlign: 'left' }}>
         <div style={cardLabel}>負担バランスを見る →</div>
       </button>
+
+      <a href={SHARED_DRIVE_URL} target="_blank" rel="noopener noreferrer" style={{ ...cardStyle, display: 'block', width: '100%', textAlign: 'left', marginTop: '10px', textDecoration: 'none' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <span style={{ fontSize: '20px' }}>📁</span>
+          <div>
+            <div style={{ fontSize: '14px', fontWeight: 500 }}>共有Googleドライブ</div>
+            <div style={cardLabel}>タップして開く →</div>
+          </div>
+        </div>
+      </a>
 
       <Announcements />
     </div>
