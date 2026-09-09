@@ -1,17 +1,1168 @@
 <!doctype html>
 <html lang="ja">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/core/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#0B1120" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-    <title>K-PICS Core</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#ffffff" />
+<title>K-PICS Core</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --bg:#f4f5f8; --card:#ffffff; --ink:#101728; --ink2:#3d4a63; --muted:#7b879e;
+  --line:#e4e8f0; --line2:#eef1f6;
+  --accent:#2f6bff; --accent-ink:#1b47b8; --accent-soft:#eaf0ff;
+  --red:#e11d48; --red-soft:#ffe9ee;
+  --orange:#e8850c; --orange-soft:#fff2e0;
+  --green:#0d9f6e; --green-soft:#e3f8f0;
+  --purple:#7c5cf0; --purple-soft:#efeaff;
+  --shadow:0 1px 2px rgba(16,23,40,.05), 0 6px 20px rgba(16,23,40,.06);
+  --r:16px;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0b1120; --card:#131b2e; --ink:#e8eefb; --ink2:#b8c4da; --muted:#8496b4;
+    --line:#26314b; --line2:#1c2540;
+    --accent:#5b8bff; --accent-ink:#a8c2ff; --accent-soft:#1b2748;
+    --red:#ff6b8a; --red-soft:#3a1a26;
+    --orange:#ffab4d; --orange-soft:#3a2a14;
+    --green:#3ddba0; --green-soft:#10332a;
+    --purple:#a58bff; --purple-soft:#241f45;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+  }
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:"Zen Kaku Gothic New","Inter",-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;
+  font-size:15px; line-height:1.65; -webkit-font-smoothing:antialiased;
+}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer;border:none;background:none}
+a{color:var(--accent)}
+h1,h2,h3,h4{margin:0;font-weight:700;line-height:1.35}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px;border:3px solid var(--bg)}
+
+/* ---------- shell ---------- */
+#app{min-height:100dvh;display:flex;flex-direction:column}
+.topbar{
+  position:sticky;top:0;z-index:40;background:color-mix(in srgb,var(--bg) 88%,transparent);
+  backdrop-filter:saturate(180%) blur(12px);
+  border-bottom:1px solid var(--line);
+  padding:calc(env(safe-area-inset-top) + 10px) 16px 10px;
+  display:flex;align-items:center;gap:10px;
+}
+.brand{display:flex;align-items:center;gap:9px;font-weight:700;letter-spacing:-.01em}
+.brand .dot{width:26px;height:26px;border-radius:9px;background:linear-gradient(135deg,var(--accent),var(--purple));
+  display:grid;place-items:center;color:#fff;font-size:13px;font-weight:700}
+.brand span{font-size:16px}
+.topbar .spacer{flex:1}
+.iconbtn{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;color:var(--ink2);
+  border:1px solid var(--line);background:var(--card)}
+.iconbtn:active{transform:scale(.94)}
+.whoami{display:flex;align-items:center;gap:7px;padding:5px 11px 5px 5px;border-radius:999px;
+  border:1px solid var(--line);background:var(--card);font-size:13px;font-weight:500;max-width:44vw}
+.whoami .av{flex:none}
+.whoami b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+
+main{flex:1;width:100%;max-width:860px;margin:0 auto;padding:16px 16px 120px}
+
+/* bottom nav */
+.tabbar{
+  position:fixed;left:0;right:0;bottom:0;z-index:50;
+  background:color-mix(in srgb,var(--card) 92%,transparent);backdrop-filter:blur(14px);
+  border-top:1px solid var(--line);
+  padding:6px 4px calc(env(safe-area-inset-bottom) + 6px);
+  display:grid;grid-template-columns:repeat(5,1fr);
+}
+.tabbar button{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 2px;border-radius:12px;
+  color:var(--muted);font-size:10.5px;font-weight:600;position:relative}
+.tabbar button.on{color:var(--accent)}
+.tabbar svg{width:22px;height:22px}
+.tabbar .badge{position:absolute;top:2px;right:calc(50% - 20px);min-width:17px;height:17px;padding:0 4px;
+  border-radius:9px;background:var(--red);color:#fff;font-size:10px;line-height:17px;font-weight:700}
+
+.fab{position:fixed;right:16px;bottom:calc(env(safe-area-inset-bottom) + 74px);z-index:55;
+  width:56px;height:56px;border-radius:19px;background:var(--accent);color:#fff;display:grid;place-items:center;
+  box-shadow:0 8px 24px rgba(47,107,255,.4)}
+.fab:active{transform:scale(.93)}
+.fab svg{width:26px;height:26px}
+
+@media(min-width:900px){
+  #app{flex-direction:row}
+  .topbar{display:none}
+  .rail{position:sticky;top:0;height:100dvh;width:228px;flex:none;border-right:1px solid var(--line);
+    background:var(--card);padding:22px 14px;display:flex;flex-direction:column;gap:4px}
+  .rail .brandbox{padding:0 8px 18px;display:flex;align-items:center;gap:10px}
+  .rail button.nav{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:12px;
+    color:var(--ink2);font-weight:600;font-size:14px;width:100%;text-align:left;position:relative}
+  .rail button.nav:hover{background:var(--line2)}
+  .rail button.nav.on{background:var(--accent-soft);color:var(--accent-ink)}
+  .rail svg{width:20px;height:20px;flex:none}
+  .rail .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:700;
+    min-width:19px;height:19px;line-height:19px;text-align:center;border-radius:10px;padding:0 5px}
+  .tabbar{display:none}
+  main{padding:28px 32px 80px;max-width:920px}
+  .fab{bottom:28px;right:28px}
+  .rail .railfoot{margin-top:auto}
+}
+.rail{display:none}
+@media(min-width:900px){.rail{display:flex}}
+
+/* ---------- common bits ---------- */
+.pagehead{margin:2px 0 16px}
+.pagehead h1{font-size:24px;letter-spacing:-.02em}
+.pagehead p{margin:4px 0 0;color:var(--muted);font-size:13px}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
+.sect{margin-bottom:22px}
+.sect-h{display:flex;align-items:center;gap:8px;margin:0 2px 9px}
+.sect-h h2{font-size:14px;letter-spacing:.02em;color:var(--ink2)}
+.sect-h .n{font-size:11px;font-weight:700;color:var(--muted);background:var(--line2);
+  border-radius:8px;padding:1px 7px}
+.sect-h .more{margin-left:auto;font-size:12px;color:var(--accent);font-weight:600}
+
+.av{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;color:#fff;
+  font-size:11px;font-weight:700;flex:none;letter-spacing:0}
+.av.sm{width:21px;height:21px;font-size:9.5px}
+.av.lg{width:34px;height:34px;font-size:13px}
+
+.chip{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:2px 9px;
+  font-size:11.5px;font-weight:700;white-space:nowrap}
+.chip.red{background:var(--red-soft);color:var(--red)}
+.chip.org{background:var(--orange-soft);color:var(--orange)}
+.chip.blue{background:var(--accent-soft);color:var(--accent-ink)}
+.chip.green{background:var(--green-soft);color:var(--green)}
+.chip.purple{background:var(--purple-soft);color:var(--purple)}
+.chip.gray{background:var(--line2);color:var(--muted)}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border-radius:12px;
+  padding:10px 16px;font-size:14px;font-weight:600;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+.btn:active{transform:scale(.97)}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.ghost{border-color:transparent;background:var(--line2);color:var(--ink2)}
+.btn.dang{background:var(--red-soft);border-color:transparent;color:var(--red)}
+.btn.sm{padding:7px 12px;font-size:13px;border-radius:10px}
+.btn.full{width:100%}
+.btn svg{width:17px;height:17px}
+.btn[disabled]{opacity:.5;pointer-events:none}
+
+.seg{display:flex;gap:4px;background:var(--line2);padding:4px;border-radius:13px;margin-bottom:14px;overflow-x:auto}
+.seg button{flex:1;min-width:max-content;padding:8px 13px;border-radius:10px;font-size:13px;font-weight:600;
+  color:var(--muted);white-space:nowrap}
+.seg button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(16,23,40,.12)}
+
+.empty{text-align:center;padding:38px 20px;color:var(--muted)}
+.empty .ico{font-size:30px;margin-bottom:8px;opacity:.55}
+.empty p{margin:0;font-size:13.5px}
+
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12.5px;font-weight:700;color:var(--ink2);margin-bottom:6px}
+.field .hint{font-weight:400;color:var(--muted);font-size:11.5px;margin-left:6px}
+input[type=text],input[type=date],input[type=time],input[type=number],input[type=password],textarea,select{
+  width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:12px;background:var(--bg);
+  outline:none;font-size:15px}
+textarea{resize:vertical;min-height:88px;line-height:1.6}
+input:focus,textarea:focus,select:focus{border-color:var(--accent);background:var(--card);
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 16%,transparent)}
+select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);
+  background-position:calc(100% - 17px) 50%,calc(100% - 12px) 50%;background-size:5px 5px,5px 5px;background-repeat:no-repeat}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pickrow{display:flex;gap:7px;flex-wrap:wrap}
+.pick{padding:8px 13px;border-radius:11px;border:1.5px solid var(--line);font-size:13px;font-weight:600;color:var(--ink2);background:var(--card)}
+.pick.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-ink)}
+
+/* ---------- sheet / modal ---------- */
+.scrim{position:fixed;inset:0;background:rgba(8,13,26,.5);z-index:100;opacity:0;transition:opacity .18s;
+  display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(2px)}
+.scrim.show{opacity:1}
+.sheet{background:var(--card);width:100%;max-width:600px;border-radius:22px 22px 0 0;
+  max-height:92dvh;display:flex;flex-direction:column;transform:translateY(18px);transition:transform .2s cubic-bezier(.2,.9,.3,1)}
+.scrim.show .sheet{transform:none}
+.sheet-h{padding:16px 18px 12px;border-bottom:1px solid var(--line2);display:flex;align-items:center;gap:10px;flex:none}
+.sheet-h h3{font-size:16px;flex:1}
+.sheet-b{padding:16px 18px;overflow-y:auto;flex:1}
+.sheet-f{padding:12px 18px calc(env(safe-area-inset-bottom) + 14px);border-top:1px solid var(--line2);
+  display:flex;gap:10px;flex:none}
+.sheet-f .btn{flex:1}
+.grab{width:36px;height:4px;border-radius:3px;background:var(--line);margin:8px auto 0}
+@media(min-width:700px){
+  .scrim{align-items:center}
+  .sheet{border-radius:20px;max-height:86dvh}
+  .grab{display:none}
+}
+.pickgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pickgrid button{display:flex;align-items:center;gap:11px;padding:15px 14px;border-radius:15px;
+  border:1px solid var(--line);background:var(--card);text-align:left}
+.pickgrid .ic{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;font-size:17px;flex:none}
+.pickgrid b{display:block;font-size:14px}
+.pickgrid small{color:var(--muted);font-size:11px}
+
+/* ---------- notice (確認してほしいこと) ---------- */
+.notice{border-radius:var(--r);border:1px solid var(--line);background:var(--card);padding:14px 15px;
+  margin-bottom:10px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.notice::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--accent)}
+.notice.urgent::before{background:var(--red)}
+.notice .nt{display:flex;align-items:flex-start;gap:9px;margin-bottom:4px}
+.notice h3{font-size:15px;flex:1;letter-spacing:-.01em}
+.notice .nb{color:var(--ink2);font-size:13.5px;white-space:pre-wrap;word-break:break-word;margin:2px 0 10px}
+.notice .nf{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-top:10px;border-top:1px dashed var(--line)}
+.avstack{display:flex}
+.avstack .av{margin-left:-6px;border:2px solid var(--card)}
+.avstack .av:first-child{margin-left:0}
+.acktxt{font-size:11.5px;color:var(--muted);font-weight:600}
+.ackbtn{margin-left:auto}
+
+/* ---------- list items ---------- */
+.list{display:flex;flex-direction:column;gap:9px}
+.item{display:flex;gap:11px;padding:13px 14px;border-radius:14px;background:var(--card);
+  border:1px solid var(--line);box-shadow:var(--shadow);align-items:flex-start}
+.item:active{background:var(--line2)}
+.item .body{flex:1;min-width:0}
+.item .ti{font-size:14.5px;font-weight:600;letter-spacing:-.01em;word-break:break-word}
+.item .ti.done{text-decoration:line-through;color:var(--muted);font-weight:500}
+.item .meta{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:6px}
+.item .sub{color:var(--muted);font-size:12.5px}
+.check{width:23px;height:23px;border-radius:8px;border:2px solid var(--line);flex:none;margin-top:2px;
+  display:grid;place-items:center;background:var(--bg);transition:.12s}
+.check.on{background:var(--green);border-color:var(--green)}
+.check svg{width:14px;height:14px;color:#fff;opacity:0}
+.check.on svg{opacity:1}
+.grouphead{display:flex;align-items:center;gap:8px;margin:18px 2px 8px;font-size:13px;font-weight:700;color:var(--ink2)}
+.grouphead .n{font-size:11px;color:var(--muted);background:var(--line2);border-radius:8px;padding:1px 7px}
+
+/* ---------- post box ---------- */
+.postbox{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;
+  margin-bottom:16px;box-shadow:var(--shadow)}
+.postbox textarea{border:none;background:transparent;padding:4px 0;min-height:44px;font-size:14.5px}
+.postbox textarea:focus{box-shadow:none}
+.postbox .pf{display:flex;align-items:center;gap:8px;padding-top:9px;border-top:1px solid var(--line2)}
+.postbox .pf .who{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px;flex:1}
+
+/* ---------- feed ---------- */
+.feed{display:flex;flex-direction:column;gap:10px}
+.post{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:13px 15px;box-shadow:var(--shadow)}
+.post .ph{display:flex;align-items:center;gap:9px;margin-bottom:7px}
+.post .ph b{font-size:13px}
+.post .ph time{font-size:11.5px;color:var(--muted);margin-left:auto}
+.post .pb{font-size:14px;color:var(--ink2);white-space:pre-wrap;word-break:break-word}
+.post .pb b.t{display:block;color:var(--ink);font-size:15px;margin-bottom:3px}
+.post .pa{display:flex;align-items:center;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line2)}
+.miniact{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--muted);
+  padding:5px 9px;border-radius:9px}
+.miniact:hover{background:var(--line2)}
+.miniact.on{color:var(--accent);background:var(--accent-soft)}
+.miniact svg{width:15px;height:15px}
+
+/* ---------- idea cards ---------- */
+.ideagrid{display:grid;grid-template-columns:1fr;gap:10px}
+@media(min-width:640px){.ideagrid{grid-template-columns:1fr 1fr}}
+.idea{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 15px;
+  box-shadow:var(--shadow);display:flex;flex-direction:column;gap:7px}
+.idea h4{font-size:15px;letter-spacing:-.01em}
+.idea p{margin:0;font-size:13px;color:var(--ink2);white-space:pre-wrap;word-break:break-word;
+  display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+.idea .if{display:flex;align-items:center;gap:7px;margin-top:auto;padding-top:9px;border-top:1px solid var(--line2)}
+
+/* ---------- seminar ---------- */
+.sem{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:15px;
+  box-shadow:var(--shadow);margin-bottom:11px}
+.sem .sh{display:flex;gap:12px;align-items:flex-start}
+.datebox{width:52px;flex:none;border-radius:13px;background:var(--accent-soft);color:var(--accent-ink);
+  text-align:center;padding:7px 0 6px;line-height:1.15}
+.datebox .m{font-size:10.5px;font-weight:700;letter-spacing:.04em}
+.datebox .d{font-size:21px;font-weight:700}
+.datebox .w{font-size:10px;opacity:.8}
+.datebox.past{background:var(--line2);color:var(--muted)}
+.sem h3{font-size:16px;letter-spacing:-.02em}
+.sem .smeta{font-size:12.5px;color:var(--muted);margin-top:3px;display:flex;flex-wrap:wrap;gap:4px 10px}
+.bar{height:6px;border-radius:4px;background:var(--line2);overflow:hidden;margin-top:11px}
+.bar i{display:block;height:100%;background:var(--green);border-radius:4px;transition:width .3s}
+.bar i.mid{background:var(--orange)} .bar i.low{background:var(--red)}
+.barlab{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);margin-top:6px;font-weight:600}
+.checklist{display:flex;flex-direction:column;gap:2px;margin:2px 0}
+.ckrow{display:flex;align-items:center;gap:11px;padding:11px 4px;border-bottom:1px solid var(--line2);text-align:left;width:100%}
+.ckrow:last-child{border-bottom:none}
+.ckrow .lab{flex:1;min-width:0}
+.ckrow .lab b{display:block;font-size:14px;font-weight:600}
+.ckrow .lab small{color:var(--muted);font-size:11.5px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ckrow .check{margin-top:0}
+.ptab{display:flex;align-items:center;gap:10px;padding:10px 2px;border-bottom:1px solid var(--line2)}
+.ptab:last-child{border-bottom:none}
+.ptab .pn{flex:1;min-width:0}
+.ptab .pn b{font-size:14px;font-weight:600;display:block}
+.ptab .pn small{color:var(--muted);font-size:11.5px}
+.kv{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--line2);font-size:13.5px}
+.kv:last-child{border-bottom:none}
+.kv .k{width:76px;flex:none;color:var(--muted);font-size:12.5px;font-weight:600}
+.kv .v{flex:1;white-space:pre-wrap;word-break:break-word}
+
+/* ---------- setup ---------- */
+.setup{max-width:440px;margin:0 auto;padding:40px 20px 60px}
+.setup .logo{width:56px;height:56px;border-radius:19px;background:linear-gradient(135deg,var(--accent),var(--purple));
+  display:grid;place-items:center;color:#fff;font-weight:700;font-size:20px;margin:0 auto 16px}
+.setup h1{text-align:center;font-size:22px;margin-bottom:6px}
+.setup .lead{text-align:center;color:var(--muted);font-size:13.5px;margin:0 0 24px}
+.steps{counter-reset:s;margin:0 0 20px;padding:0;list-style:none}
+.steps li{counter-increment:s;position:relative;padding:0 0 14px 32px;font-size:13px;color:var(--ink2)}
+.steps li::before{content:counter(s);position:absolute;left:0;top:1px;width:21px;height:21px;border-radius:50%;
+  background:var(--accent-soft);color:var(--accent-ink);font-size:11px;font-weight:700;display:grid;place-items:center}
+.steps code{background:var(--line2);padding:1px 5px;border-radius:5px;font-size:12px}
+.err{background:var(--red-soft);color:var(--red);padding:10px 13px;border-radius:11px;font-size:13px;margin-bottom:14px}
+.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 88px);transform:translate(-50%,10px);
+  background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:999px;font-size:13px;font-weight:600;
+  z-index:200;opacity:0;transition:.2s;pointer-events:none;box-shadow:var(--shadow)}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.loading{display:grid;place-items:center;padding:60px 0;color:var(--muted);font-size:13px}
+.spin{width:26px;height:26px;border:2.5px solid var(--line);border-top-color:var(--accent);border-radius:50%;
+  animation:sp .7s linear infinite;margin-bottom:10px}
+@keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="layer"></div>
+<div id="toast" class="toast"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+/* ==========================================================
+   K-PICS Core v2
+   ここに Supabase の情報を書いておくと、全員が設定画面をとばせます。
+   （書かない場合は、アプリ初回起動時に画面から入力できます）
+   ========================================================== */
+const HARDCODED = {
+  url: "https://dziwzkmizakolamkivsr.supabase.co",
+  key: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR6aXd6a21pemFrb2xhbWtpdnNyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5OTgzNTcsImV4cCI6MjA5ODU3NDM1N30.fSVczFQxs3ldDLMXP0vx7YZuqK6tKlJQ7CcRziIvOcA"
+};
+/* ========================================================== */
+
+const CFGK = 'kpics.cfg.v3', MEK = 'kpics.me.v3';
+let sb = null;
+
+const S = {
+  view: 'home',
+  board: 'report',
+  todoSort: 'urgency',
+  todoDone: false,
+  semTab: 'upcoming',
+  me: localStorage.getItem(MEK) || '',
+  members: [], items: [], comments: [], acks: [], seminars: [], participants: [],
+  ready: false, loading: true, error: '', cfg: null
+};
+
+/* ---------------- utils ---------------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const nl = s => esc(s).replace(/\n/g, '<br>');
+const PAL = ['#2f6bff', '#e11d48', '#0d9f6e', '#7c5cf0', '#e8850c', '#0891b2', '#db2777', '#65a30d'];
+function memberColor(name) {
+  const m = S.members.find(x => x.name === name);
+  if (m && m.color) return m.color;
+  let h = 0; for (const c of String(name || '?')) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return PAL[h % PAL.length];
+}
+const initial = n => String(n || '?').trim().slice(0, 2);
+function av(name, cls = '') {
+  return `<span class="av ${cls}" style="background:${memberColor(name)}">${esc(initial(name))}</span>`;
+}
+function today() { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+function dparse(s) { if (!s) return null; const p = String(s).slice(0, 10).split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); }
+function daysLeft(s) { const d = dparse(s); if (!d) return null; return Math.round((d - today()) / 86400000); }
+const WD = ['日', '月', '火', '水', '木', '金', '土'];
+function fmtDate(s) { const d = dparse(s); if (!d) return ''; return `${d.getMonth() + 1}/${d.getDate()}(${WD[d.getDay()]})`; }
+function dueLabel(s) {
+  const n = daysLeft(s); if (n === null) return null;
+  if (n < 0) return { t: `${-n}日超過`, c: 'red' };
+  if (n === 0) return { t: '今日まで', c: 'red' };
+  if (n === 1) return { t: '明日まで', c: 'org' };
+  if (n <= 3) return { t: `あと${n}日`, c: 'org' };
+  if (n <= 7) return { t: `あと${n}日`, c: 'blue' };
+  return { t: fmtDate(s), c: 'gray' };
+}
+function relTime(iso) {
+  if (!iso) return '';
+  const t = new Date(iso), m = Math.floor((Date.now() - t) / 60000);
+  if (m < 1) return 'たった今';
+  if (m < 60) return `${m}分前`;
+  if (m < 1440) return `${Math.floor(m / 60)}時間前`;
+  if (m < 10080) return `${Math.floor(m / 1440)}日前`;
+  return `${t.getMonth() + 1}/${t.getDate()}`;
+}
+const PRI = { urgent: { t: '緊急', c: 'red' }, high: { t: '高', c: 'org' }, normal: { t: '中', c: 'blue' }, low: { t: '低', c: 'gray' } };
+const STAGE = { seed: { t: '温め中', c: 'gray' }, review: { t: '検討中', c: 'blue' }, adopted: { t: '採用', c: 'green' }, dropped: { t: '見送り', c: 'gray' } };
+const KIND = {
+  notice: { t: '確認事項', ic: '📌', c: '#e11d48' },
+  report: { t: '報告', ic: '📝', c: '#2f6bff' },
+  todo: { t: 'ToDo', ic: '✅', c: '#0d9f6e' },
+  idea: { t: 'アイデア', ic: '💡', c: '#e8850c' },
+  consult: { t: '相談', ic: '💬', c: '#7c5cf0' }
+};
+function urgency(it) {
+  const p = { urgent: 0, high: 1, normal: 2, low: 3 }[it.priority] ?? 2;
+  const d = it.due_date ? daysLeft(it.due_date) : null;
+  const b = d === null ? 5 : d < 0 ? 0 : d === 0 ? 1 : d <= 2 ? 2 : d <= 7 ? 3 : 4;
+  return b * 10 + p;
+}
+let toastT;
+function toast(msg) {
+  const el = $('#toast'); el.textContent = msg; el.classList.add('show');
+  clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('show'), 2000);
+}
+
+/* ---------------- icons ---------------- */
+const I = {
+  home: '<path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+  todo: '<path d="M9 11.5 11.5 14 16 8.5"/><rect x="3" y="3" width="18" height="18" rx="5"/>',
+  board: '<rect x="3" y="3" width="7.5" height="7.5" rx="2.2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2.2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2.2"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2.2"/>',
+  cal: '<rect x="3" y="5" width="18" height="16" rx="4"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+  cog: '<circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1v.3a2 2 0 1 1-4 0v-.2a1.6 1.6 0 0 0-2.8-1.1l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.6 1.6 0 0 0 3.5 14H3a2 2 0 1 1 0-4h.2A1.6 1.6 0 0 0 4.3 7.2l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.6 1.6 0 0 0 10 3.5V3a2 2 0 1 1 4 0v.2a1.6 1.6 0 0 0 2.7 1.1l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0 1.1 2.7h.4a2 2 0 1 1 0 4h-.2a1.6 1.6 0 0 0-1.4 1z"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  check: '<path d="M4 12.5 9.5 18 20 6.5"/>',
+  back: '<path d="M15 19l-7-7 7-7"/>',
+  x: '<path d="M6 6l12 12M18 6 6 18"/>',
+  refresh: '<path d="M3.5 12a8.5 8.5 0 0 1 14.6-5.9L21 9"/><path d="M21 4v5h-5"/><path d="M20.5 12a8.5 8.5 0 0 1-14.6 5.9L3 15"/><path d="M3 20v-5h5"/>',
+  send: '<path d="M4 12 20 4l-7 16-2.5-6.5z"/>',
+  like: '<path d="M7 21V10l5-7 .9.6a2 2 0 0 1 .8 2.1L13 9h5.5a2.5 2.5 0 0 1 2.4 3.1l-1.7 7A2.5 2.5 0 0 1 16.8 21z"/><path d="M7 10H4v11h3"/>',
+  chat: '<path d="M21 12a8 8 0 0 1-11.7 7.1L4 20.5l1.4-4.6A8 8 0 1 1 21 12z"/>',
+  pin: '<path d="M12 17v5"/><path d="M9 4h6l-1 5 3.2 3.2a1 1 0 0 1-.7 1.7H7.5a1 1 0 0 1-.7-1.7L10 9z"/>',
+  trash: '<path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"/>',
+  edit: '<path d="M4 20h4L20 8a2.5 2.5 0 0 0-3.5-3.5L4 16.5z"/>',
+  user: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5.2l3.2 2"/>',
+  pinsm: '<path d="M12 17v5"/><path d="M9 4h6l-1 5 3.2 3.2a1 1 0 0 1-.7 1.7H7.5a1 1 0 0 1-.7-1.7L10 9z"/>'
+};
+const ic = (n, w = 1.8) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${I[n] || ''}</svg>`;
+
+/* ---------------- data layer ---------------- */
+async function loadAll(silent) {
+  if (!silent) { S.loading = true; render(); }
+  try {
+    const q = t => sb.from(t).select('*');
+    const [me, it, cm, ak, se] = await Promise.all([
+      q('kpics_members').order('sort_order'),
+      q('kpics_items').order('created_at', { ascending: false }),
+      q('kpics_comments').order('created_at'),
+      q('kpics_acks'),
+      q('kpics_seminars').order('event_date')
+    ]);
+    for (const r of [me, it, cm, ak, se]) if (r.error) throw r.error;
+    S.members = me.data; S.items = it.data; S.comments = cm.data;
+    S.acks = ak.data; S.seminars = se.data;
+    S.error = '';
+    if (!S.me && S.members[0]) { S.me = S.members[0].name; localStorage.setItem(MEK, S.me); }
+  } catch (e) {
+    S.error = (e && e.message) || String(e);
+  }
+  S.loading = false; render();
+}
+async function ins(t, row) {
+  const { data, error } = await sb.from(t).insert(row).select().single();
+  if (error) { toast('保存できませんでした'); throw error; }
+  return data;
+}
+async function upd(t, id, patch) {
+  const { data, error } = await sb.from(t).update(patch).eq('id', id).select().single();
+  if (error) { toast('更新できませんでした'); throw error; }
+  return data;
+}
+async function del(t, id) {
+  const { error } = await sb.from(t).delete().eq('id', id);
+  if (error) { toast('削除できませんでした'); throw error; }
+}
+function replaceIn(arr, row) { const i = arr.findIndex(x => x.id === row.id); if (i < 0) arr.unshift(row); else arr[i] = row; }
+
+/* ---------------- derived ---------------- */
+const alive = it => it.status !== 'archived';
+const notices = () => S.items.filter(i => alive(i) && i.pinned && i.status !== 'done')
+  .sort((a, b) => urgency(a) - urgency(b) || new Date(b.created_at) - new Date(a.created_at));
+const todos = () => S.items.filter(i => i.kind === 'todo' && alive(i));
+const openTodos = () => todos().filter(i => i.status !== 'done');
+const consults = () => S.items.filter(i => i.kind === 'consult' && alive(i));
+const ackOf = id => S.acks.filter(a => a.item_id === id);
+const comOf = id => S.comments.filter(c => c.item_id === id);
+
+const SEM_CHECKS = [
+  { k: 'date_confirmed', t: '日時', s: it => it.event_date ? `${fmtDate(it.event_date)} ${it.start_time || ''}${it.date_confirmed ? ' / 先生に確認済み' : ' / 先生に未確認'}` : '未定' },
+  { k: 'venue_booked', t: '場所', s: it => (it.venue || '未定') + (it.venue_booked ? ' / 押さえた' : ' / 未確保') },
+  { k: 'equipment_ready', t: '必要機材', s: it => it.equipment || '未記入' },
+  { k: 'announced', t: '案内', s: it => it.announced ? '案内済み' : 'まだ案内していない' },
+  { k: 'calendar_added', t: 'K-PICSカレンダー', s: it => it.calendar_added ? '登録済み' : '未登録' }
+];
+function semProgress(s) {
+  const done = SEM_CHECKS.filter(c => s[c.k]).length + (s.facilitator ? 1 : 0);
+  return { done, total: SEM_CHECKS.length + 1 };
+}
+function semTodoCount(s) { const p = semProgress(s); return p.total - p.done; }
+</script>
+<script>
+/* ================= views ================= */
+const NAV = [
+  { k: 'home', t: 'ホーム', i: 'home' },
+  { k: 'todo', t: 'ToDo', i: 'todo' },
+  { k: 'board', t: 'ボード', i: 'board' },
+  { k: 'sem', t: 'セミナー', i: 'cal' },
+  { k: 'set', t: '設定', i: 'cog' }
+];
+function badgeOf(k) {
+  if (k === 'home') return notices().filter(n => n.needs_ack && !ackOf(n.id).some(a => a.member === S.me)).length;
+  if (k === 'todo') return openTodos().filter(t => t.assignee === S.me && t.due_date && daysLeft(t.due_date) <= 0).length;
+  return 0;
+}
+function rail() {
+  return `<nav class="rail">
+    <div class="brandbox"><span class="dot" style="width:30px;height:30px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--purple));display:grid;place-items:center;color:#fff;font-weight:700;font-size:13px">KP</span>
+      <div><div style="font-weight:700;font-size:15px;letter-spacing:-.02em">K-PICS Core</div>
+      <div style="font-size:11px;color:var(--muted)">部の運営ダッシュボード</div></div></div>
+    ${NAV.map(n => { const b = badgeOf(n.k); return `<button class="nav ${S.view === n.k ? 'on' : ''}" data-act="nav" data-k="${n.k}">${ic(n.i)}<span>${n.t}</span>${b ? `<span class="badge">${b}</span>` : ''}</button>`; }).join('')}
+    <div class="railfoot">
+      <button class="nav" data-act="reload">${ic('refresh')}<span>最新に更新</span></button>
+      <button class="nav" data-act="whoami">${av(S.me, 'sm')}<span>${esc(S.me || '名前を選ぶ')}</span></button>
+    </div></nav>`;
+}
+function topbar() {
+  return `<header class="topbar">
+    <div class="brand"><span class="dot">KP</span><span>K-PICS Core</span></div>
+    <div class="spacer"></div>
+    <button class="iconbtn" data-act="reload">${ic('refresh')}</button>
+    <button class="whoami" data-act="whoami">${av(S.me, 'sm')}<b>${esc(S.me || '名前を選ぶ')}</b></button>
+  </header>`;
+}
+function tabbar() {
+  return `<nav class="tabbar">${NAV.map(n => { const b = badgeOf(n.k); return `<button class="${S.view === n.k ? 'on' : ''}" data-act="nav" data-k="${n.k}">${ic(n.i)}<span>${n.t}</span>${b ? `<span class="badge">${b}</span>` : ''}</button>`; }).join('')}</nav>`;
+}
+
+function render() {
+  const app = $('#app');
+  if (!S.cfg) { app.style.display = 'block'; app.innerHTML = viewSetup(); return; }
+  app.style.display = '';
+  let inner;
+  if (S.loading) inner = `<div class="loading"><div class="spin"></div>読み込んでいます…</div>`;
+  else if (S.error) inner = `<div class="err">つながりませんでした：${esc(S.error)}</div>
+      <p style="font-size:13px;color:var(--muted)">テーブルがまだ作られていないか、URL・キーが違う可能性があります。設定から確認してください。</p>
+      <div style="display:flex;gap:10px;margin-top:14px"><button class="btn pri" data-act="reload">もう一度ためす</button><button class="btn" data-act="resetcfg">接続設定をやり直す</button></div>`;
+  else inner = ({ home: viewHome, todo: viewTodo, board: viewBoard, sem: viewSem, set: viewSet })[S.view]();
+  app.innerHTML = rail() +
+    `<div style="flex:1;display:flex;flex-direction:column;min-width:0">${topbar()}<main>${inner}</main></div>` +
+    tabbar() +
+    (S.loading || S.error ? '' : `<button class="fab" data-act="new">${ic('plus', 2.4)}</button>`);
+}
+
+/* ---------- HOME ---------- */
+function noticeCard(it) {
+  const ac = ackOf(it.id), mine = ac.some(a => a.member === S.me);
+  const need = it.needs_ack;
+  const others = S.members.filter(m => !ac.some(a => a.member === m.name)).map(m => m.name);
+  return `<div class="notice ${it.priority === 'urgent' ? 'urgent' : ''}" data-act="item" data-id="${it.id}">
+    <div class="nt">
+      <span class="chip ${it.priority === 'urgent' ? 'red' : 'blue'}">${KIND[it.kind].ic} ${it.priority === 'urgent' ? '要確認・緊急' : '確認してください'}</span>
+      ${it.due_date ? `<span class="chip ${(dueLabel(it.due_date) || {}).c || 'gray'}">${(dueLabel(it.due_date) || {}).t || ''}</span>` : ''}
+    </div>
+    <h3>${esc(it.title || '（無題）')}</h3>
+    ${it.body ? `<div class="nb">${nl(it.body)}</div>` : '<div style="height:8px"></div>'}
+    <div class="nf">
+      ${av(it.author, 'sm')}<span class="acktxt">${esc(it.author || '不明')} · ${relTime(it.created_at)}</span>
+      ${need ? `<span class="avstack">${ac.slice(0, 5).map(a => av(a.member, 'sm')).join('')}</span>
+        <span class="acktxt">${ac.length}/${S.members.length || ac.length} 確認${others.length ? `（未：${esc(others.slice(0, 3).join('・'))}${others.length > 3 ? '他' : ''}）` : ''}</span>` : ''}
+      ${need ? (mine
+      ? `<span class="chip green ackbtn">✓ 確認済み</span>`
+      : `<button class="btn pri sm ackbtn" data-act="ack" data-id="${it.id}">確認しました</button>`) : ''}
+    </div></div>`;
+}
+function todoRow(it) {
+  const dl = dueLabel(it.due_date), done = it.status === 'done';
+  return `<div class="item" data-act="item" data-id="${it.id}">
+    <button class="check ${done ? 'on' : ''}" data-act="toggle" data-id="${it.id}">${ic('check', 3.2)}</button>
+    <div class="body"><div class="ti ${done ? 'done' : ''}">${esc(it.title || (it.body || '').slice(0, 40) || '（無題）')}</div>
+      <div class="meta">
+        ${it.assignee ? `${av(it.assignee, 'sm')}<span class="sub">${esc(it.assignee)}</span>` : `<span class="chip gray">担当未定</span>`}
+        ${dl && !done ? `<span class="chip ${dl.c}">${dl.t}</span>` : ''}
+        ${it.priority !== 'normal' && !done ? `<span class="chip ${PRI[it.priority].c}">${PRI[it.priority].t}</span>` : ''}
+      </div></div></div>`;
+}
+function semRow(s) {
+  const p = semProgress(s), pct = Math.round(p.done / p.total * 100);
+  const d = dparse(s.event_date), past = d && d < today();
+  const dl = s.event_date ? daysLeft(s.event_date) : null;
+  return `<div class="sem" data-act="sem" data-id="${s.id}">
+    <div class="sh">
+      <div class="datebox ${past ? 'past' : ''}">${d ? `<div class="m">${d.getMonth() + 1}月</div><div class="d">${d.getDate()}</div><div class="w">${WD[d.getDay()]}</div>` : `<div class="d">?</div><div class="w">未定</div>`}</div>
+      <div style="flex:1;min-width:0">
+        <h3>${esc(s.title || '（無題のセミナー）')}</h3>
+        <div class="smeta">
+          ${s.start_time ? `<span>🕐 ${esc(s.start_time)}${s.end_time ? '〜' + esc(s.end_time) : ''}</span>` : ''}
+          ${s.venue ? `<span>📍 ${esc(s.venue)}</span>` : ''}
+          ${s.lecturer ? `<span>👨‍⚕️ ${esc(s.lecturer)}</span>` : ''}
+          ${s.facilitator ? `<span>🎤 ${esc(s.facilitator)}</span>` : `<span style="color:var(--red)">🎤 ファシリ未定</span>`}
+        </div>
+      </div>
+      ${dl !== null && dl >= 0 && dl <= 14 && p.done < p.total ? `<span class="chip ${dl <= 3 ? 'red' : 'org'}">残${p.total - p.done}件</span>` : ''}
+    </div>
+    <div class="bar"><i class="${pct >= 100 ? '' : pct >= 50 ? 'mid' : 'low'}" style="width:${pct}%"></i></div>
+    <div class="barlab"><span>準備 ${p.done}/${p.total}</span><span>${pct >= 100 ? '準備OK 🎉' : SEM_CHECKS.filter(c => !s[c.k]).map(c => c.t).concat(s.facilitator ? [] : ['ファシリ']).slice(0, 2).join('・') + ' が未完了'}</span></div>
+  </div>`;
+}
+function sectionHead(t, n, more) {
+  return `<div class="sect-h"><h2>${t}</h2>${n ? `<span class="n">${n}</span>` : ''}${more ? `<button class="more" data-act="nav" data-k="${more}">すべて見る</button>` : ''}</div>`;
+}
+function viewHome() {
+  const nt = notices();
+  const soon = openTodos().filter(t => t.due_date && daysLeft(t.due_date) <= 7).sort((a, b) => urgency(a) - urgency(b));
+  const upcoming = S.seminars.filter(s => s.status !== 'cancelled' && (!s.event_date || dparse(s.event_date) >= today())).slice(0, 3);
+  const oc = consults().filter(c => c.status !== 'done').slice(0, 3);
+  const reps = S.items.filter(i => i.kind === 'report' && alive(i)).slice(0, 3);
+  const h = new Date().getHours();
+  const greet = h < 5 ? 'おつかれさま' : h < 11 ? 'おはようございます' : h < 18 ? 'おつかれさまです' : 'こんばんは';
+
+  let out = `<div class="pagehead"><h1>${esc(greet)}${S.me ? '、' + esc(S.me) + 'さん' : ''}</h1>
+    <p>${new Date().getMonth() + 1}月${new Date().getDate()}日(${WD[new Date().getDay()]})・全員で確認したいことをここにまとめています</p></div>`;
+
+  out += `<section class="sect">${sectionHead('📌 みんなに確認してほしいこと', nt.length)}`;
+  if (!nt.length) out += `<div class="card empty"><div class="ico">📌</div><p>いまホームに出ている確認事項はありません。<br>全員に見てほしいことは「お知らせ」で投稿するとここに出ます。</p>
+    <button class="btn pri sm" style="margin-top:12px" data-act="newkind" data-k="notice">お知らせを書く</button></div>`;
+  else out += nt.map(noticeCard).join('');
+  out += `</section>`;
+
+  out += `<section class="sect">${sectionHead('⏰ 期限が近い ToDo', soon.length, 'todo')}`;
+  out += soon.length ? `<div class="list">${soon.slice(0, 6).map(todoRow).join('')}</div>`
+    : `<div class="card empty"><p>直近1週間で期限のToDoはありません。</p></div>`;
+  out += `</section>`;
+
+  if (upcoming.length) out += `<section class="sect">${sectionHead('🗓 これからのセミナー', upcoming.length, 'sem')}${upcoming.map(semRow).join('')}</section>`;
+
+  if (oc.length) out += `<section class="sect">${sectionHead('💬 返事待ちの相談', oc.length, 'board')}
+    <div class="list">${oc.map(c => `<div class="item" data-act="item" data-id="${c.id}"><span style="font-size:18px">💬</span>
+      <div class="body"><div class="ti">${esc(c.title || (c.body || '').slice(0, 40))}</div>
+      <div class="meta">${av(c.author, 'sm')}<span class="sub">${esc(c.author)} · ${relTime(c.created_at)}</span>
+      <span class="chip ${comOf(c.id).length ? 'blue' : 'gray'}">返信 ${comOf(c.id).length}</span></div></div></div>`).join('')}</div></section>`;
+
+  if (reps.length) out += `<section class="sect">${sectionHead('📝 最近の報告', 0, 'board')}
+    <div class="feed">${reps.map(postCard).join('')}</div></section>`;
+  return out;
+}
+
+/* ---------- TODO ---------- */
+function viewTodo() {
+  const all = todos();
+  let list = S.todoDone ? all : all.filter(t => t.status !== 'done');
+  let out = `<div class="pagehead"><h1>ToDo</h1><p>未完了 ${all.filter(t => t.status !== 'done').length}件${all.filter(t => t.status !== 'done' && t.due_date && daysLeft(t.due_date) < 0).length ? ' ・ 期限切れ ' + all.filter(t => t.status !== 'done' && t.due_date && daysLeft(t.due_date) < 0).length + '件' : ''}</p></div>`;
+  out += `<div class="seg">
+    ${[['urgency', '緊急度順'], ['due', '期限順'], ['person', '人別']].map(([k, t]) => `<button class="${S.todoSort === k ? 'on' : ''}" data-act="todosort" data-k="${k}">${t}</button>`).join('')}
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:14px">
+    <button class="pick ${S.todoDone ? 'on' : ''}" data-act="tododone">完了したものも表示</button>
+    <button class="pick" data-act="newkind" data-k="todo">＋ ToDoを追加</button>
+  </div>`;
+  if (!list.length) return out + `<div class="card empty"><div class="ico">✅</div><p>いまのToDoはありません。</p></div>`;
+
+  if (S.todoSort === 'person') {
+    const names = [...new Set(list.map(t => t.assignee || ''))].sort((a, b) => (a === '' ? 1 : b === '' ? -1 : a.localeCompare(b, 'ja')));
+    for (const n of names) {
+      const g = list.filter(t => (t.assignee || '') === n).sort((a, b) => urgency(a) - urgency(b));
+      out += `<div class="grouphead">${n ? av(n, 'sm') : '<span style="font-size:15px">🙋</span>'}<span>${esc(n || '担当未定')}</span><span class="n">${g.filter(x => x.status !== 'done').length}</span></div>
+        <div class="list">${g.map(todoRow).join('')}</div>`;
+    }
+    return out;
+  }
+  if (S.todoSort === 'due') list = [...list].sort((a, b) => (a.due_date || '9999').localeCompare(b.due_date || '9999'));
+  else list = [...list].sort((a, b) => urgency(a) - urgency(b));
+  const od = list.filter(t => t.status !== 'done' && t.due_date && daysLeft(t.due_date) < 0);
+  const rest = list.filter(t => !od.includes(t));
+  if (od.length) out += `<div class="grouphead" style="color:var(--red)">⚠️ 期限切れ<span class="n">${od.length}</span></div><div class="list">${od.map(todoRow).join('')}</div>`;
+  out += `${od.length ? '<div class="grouphead">その他</div>' : ''}<div class="list">${rest.map(todoRow).join('')}</div>`;
+  return out;
+}
+
+/* ---------- BOARD ---------- */
+function postCard(it) {
+  return `<div class="post" data-act="item" data-id="${it.id}">
+    <div class="ph">${av(it.author, 'sm')}<b>${esc(it.author || '不明')}</b><time>${relTime(it.created_at)}</time></div>
+    <div class="pb">${it.title ? `<b class="t">${esc(it.title)}</b>` : ''}${nl(it.body || '')}</div>
+    ${it.pinned ? `<div class="pa"><span class="chip red">📌 ホームに表示中</span></div>` : ''}
+  </div>`;
+}
+function viewBoard() {
+  const tabs = [['report', '📝 報告'], ['idea', '💡 アイデア'], ['consult', '💬 相談']];
+  let out = `<div class="pagehead"><h1>ボード</h1><p>報告・思いついた案・相談ごとを気軽に置く場所</p></div>
+  <div class="seg">${tabs.map(([k, t]) => `<button class="${S.board === k ? 'on' : ''}" data-act="board" data-k="${k}">${t}</button>`).join('')}</div>`;
+
+  if (S.board === 'report') {
+    const rs = S.items.filter(i => i.kind === 'report' && alive(i));
+    out += `<div class="postbox">
+      <textarea id="quick" placeholder="なんでも報告してください（例：エコー機の予約を取りました）"></textarea>
+      <div class="pf"><div class="who">${av(S.me, 'sm')}${esc(S.me || '名前未設定')}</div>
+        <button class="btn ghost sm" data-act="quickpin">📌 ホームにも出す</button>
+        <button class="btn pri sm" data-act="quickpost">${ic('send')} 投稿</button></div></div>`;
+    out += rs.length ? `<div class="feed">${rs.map(postCard).join('')}</div>`
+      : `<div class="card empty"><div class="ico">📝</div><p>まだ報告がありません。上の欄から気軽にどうぞ。</p></div>`;
+    return out;
+  }
+  if (S.board === 'idea') {
+    const is = S.items.filter(i => i.kind === 'idea' && alive(i));
+    const stages = ['seed', 'review', 'adopted', 'dropped'];
+    out += `<button class="btn full" style="margin-bottom:14px" data-act="newkind" data-k="idea">＋ 思いついたことを書く</button>`;
+    if (!is.length) return out + `<div class="card empty"><div class="ico">💡</div><p>アイデアはまだありません。<br>ふと思いついた企画・改善案をここに。</p></div>`;
+    for (const st of stages) {
+      const g = is.filter(i => (i.idea_stage || 'seed') === st);
+      if (!g.length) continue;
+      out += `<div class="grouphead"><span class="chip ${STAGE[st].c}">${STAGE[st].t}</span><span class="n">${g.length}</span></div>
+        <div class="ideagrid">${g.map(i => `<div class="idea" data-act="item" data-id="${i.id}">
+          <h4>${esc(i.title || '（無題）')}</h4>${i.body ? `<p>${nl(i.body)}</p>` : ''}
+          <div class="if">${av(i.author, 'sm')}<span class="sub" style="font-size:12px;color:var(--muted)">${esc(i.author)}</span>
+            <button class="miniact ${i.likes ? 'on' : ''}" style="margin-left:auto" data-act="like" data-id="${i.id}">${ic('like')} ${i.likes || 0}</button></div>
+        </div>`).join('')}</div>`;
+    }
+    return out;
+  }
+  const cs = consults();
+  out += `<button class="btn full" style="margin-bottom:14px" data-act="newkind" data-k="consult">＋ 相談したいことを書く</button>`;
+  if (!cs.length) return out + `<div class="card empty"><div class="ico">💬</div><p>相談事項はありません。</p></div>`;
+  const open = cs.filter(c => c.status !== 'done'), closed = cs.filter(c => c.status === 'done');
+  const row = c => `<div class="item" data-act="item" data-id="${c.id}">
+      <span style="font-size:19px;margin-top:1px">${c.status === 'done' ? '✅' : '💬'}</span>
+      <div class="body"><div class="ti ${c.status === 'done' ? 'done' : ''}">${esc(c.title || (c.body || '').slice(0, 40))}</div>
+        <div class="meta">${av(c.author, 'sm')}<span class="sub">${esc(c.author)} · ${relTime(c.created_at)}</span>
+        <span class="chip ${comOf(c.id).length ? 'blue' : 'gray'}">返信 ${comOf(c.id).length}</span>
+        ${c.priority === 'urgent' ? '<span class="chip red">急ぎ</span>' : ''}</div></div></div>`;
+  if (open.length) out += `<div class="grouphead">未解決<span class="n">${open.length}</span></div><div class="list">${open.map(row).join('')}</div>`;
+  if (closed.length) out += `<div class="grouphead">解決済み<span class="n">${closed.length}</span></div><div class="list">${closed.map(row).join('')}</div>`;
+  return out;
+}
+
+/* ---------- SEMINAR ---------- */
+function viewSem() {
+  const up = S.seminars.filter(s => !s.event_date || dparse(s.event_date) >= today());
+  const past = S.seminars.filter(s => s.event_date && dparse(s.event_date) < today()).reverse();
+  const list = S.semTab === 'upcoming' ? up : past;
+  let out = `<div class="pagehead"><h1>セミナー</h1><p>登録すると準備チェックリストが自動でつきます</p></div>
+  <div class="seg">
+    <button class="${S.semTab === 'upcoming' ? 'on' : ''}" data-act="semtab" data-k="upcoming">これから (${up.length})</button>
+    <button class="${S.semTab === 'past' ? 'on' : ''}" data-act="semtab" data-k="past">終わったもの (${past.length})</button>
+  </div>
+  <button class="btn full" style="margin-bottom:14px" data-act="newsem">＋ セミナーを登録する</button>`;
+  return out + (list.length ? list.map(semRow).join('')
+    : `<div class="card empty"><div class="ico">🗓</div><p>${S.semTab === 'upcoming' ? 'これからのセミナーはまだありません。' : '過去のセミナーはありません。'}</p></div>`);
+}
+
+/* ---------- SETTINGS ---------- */
+function viewSet() {
+  return `<div class="pagehead"><h1>設定</h1><p>自分の名前・メンバー・接続先</p></div>
+  <section class="sect">${sectionHead('自分は誰か')}
+    <div class="card" style="padding:14px">
+      <div class="pickrow">${S.members.map(m => `<button class="pick ${S.me === m.name ? 'on' : ''}" data-act="setme" data-n="${esc(m.name)}">${esc(m.name)}</button>`).join('') || '<span style="color:var(--muted);font-size:13px">メンバーを追加してください</span>'}</div>
+      <p style="font-size:12px;color:var(--muted);margin:12px 0 0">投稿者名や「確認しました」の記録に使われます。この端末にだけ保存されます。</p>
+    </div></section>
+  <section class="sect">${sectionHead('メンバー', S.members.length)}
+    <div class="card" style="padding:6px 14px">
+      ${S.members.map(m => `<div class="ptab">${av(m.name)}<div class="pn"><b>${esc(m.name)}</b><small>${esc(m.role || '役職なし')}</small></div>
+        <button class="iconbtn" style="width:32px;height:32px" data-act="delmember" data-id="${m.id}">${ic('trash')}</button></div>`).join('') || '<p style="color:var(--muted);font-size:13px;padding:10px 0">まだいません</p>'}
+    </div>
+    <button class="btn full" style="margin-top:10px" data-act="newmember">＋ メンバーを追加</button>
+  </section>
+  <section class="sect">${sectionHead('データ')}
+    <div class="card" style="padding:14px;display:flex;flex-direction:column;gap:10px">
+      <button class="btn full" data-act="reload">${ic('refresh')} 最新に更新する</button>
+      <div style="font-size:12px;color:var(--muted);word-break:break-all">接続先：${esc((S.cfg && S.cfg.url) || '')}</div>
+      <button class="btn dang full" data-act="resetcfg">接続設定をやり直す</button>
+    </div></section>
+  <p style="text-align:center;color:var(--muted);font-size:11.5px;margin-top:26px">K-PICS Core v2</p>`;
+}
+
+/* ---------- SETUP ---------- */
+function viewSetup() {
+  return `<div class="setup">
+    <div class="logo">KP</div>
+    <h1>K-PICS Core をつなぐ</h1>
+    <p class="lead">最初の1回だけ、Supabase の情報を入れてください。<br>次からは自動で開きます。</p>
+    <ol class="steps">
+      <li>Supabase の画面を開き、左下の <code>Project Settings</code> → <code>API</code> を押します。</li>
+      <li><b>Project URL</b> をコピーして、下の1つめの欄に貼ります。</li>
+      <li><b>anon public</b> のキーをコピーして、2つめの欄に貼ります。（service_role は使いません）</li>
+      <li>まだテーブルを作っていない場合は、先に <code>kpics-schema.sql</code> を SQL Editor に貼って実行してください。</li>
+    </ol>
+    <div id="setuperr"></div>
+    <div class="field"><label>Project URL</label><input type="text" id="cfgurl" placeholder="https://xxxxxxxx.supabase.co" autocomplete="off" spellcheck="false"></div>
+    <div class="field"><label>anon public キー</label><textarea id="cfgkey" placeholder="eyJhbGciOiJIUzI1NiIs..." style="min-height:70px;font-size:13px" spellcheck="false"></textarea></div>
+    <button class="btn pri full" data-act="savecfg">つなぐ</button>
+  </div>`;
+}
+</script>
+<script>
+/* ================= sheets ================= */
+let sheetCtx = null, quickPin = false;
+function closeSheet() {
+  sheetCtx = null;
+  const l = $('#layer'); const s = l.querySelector('.scrim');
+  if (!s) { l.innerHTML = ''; return; }
+  s.classList.remove('show'); setTimeout(() => { l.innerHTML = ''; }, 180);
+}
+function sheet(title, body, foot) {
+  $('#layer').innerHTML = `<div class="scrim"><div class="sheet"><div class="grab"></div>
+    <div class="sheet-h"><h3>${title}</h3><button class="iconbtn" style="width:32px;height:32px" data-act="close">${ic('x')}</button></div>
+    <div class="sheet-b">${body}</div>${foot ? `<div class="sheet-f">${foot}</div>` : ''}</div></div>`;
+  requestAnimationFrame(() => $('#layer .scrim').classList.add('show'));
+}
+function openSheetFor(ctx) {
+  sheetCtx = ctx;
+  if (ctx.type === 'item') return sheetItem(ctx.id);
+  if (ctx.type === 'sem') return sheetSem(ctx.id);
+}
+function refreshSheet() { if (sheetCtx) openSheetFor(sheetCtx); }
+
+const memberPicker = (name, act) => `<div class="pickrow">
+  <button class="pick ${!name ? 'on' : ''}" data-act="${act}" data-n="">未定</button>
+  ${S.members.map(m => `<button class="pick ${name === m.name ? 'on' : ''}" data-act="${act}" data-n="${esc(m.name)}">${esc(m.name)}</button>`).join('')}</div>`;
+
+/* ---------- new picker ---------- */
+function sheetNew() {
+  const opt = (k) => `<button data-act="newkind" data-k="${k}"><span class="ic" style="background:${KIND[k].c}22">${KIND[k].ic}</span>
+    <span><b>${KIND[k].t}</b><small>${{ notice: '全員に確認してほしいこと', report: '雑多に共有する', todo: '誰がいつまでにやるか', idea: '思いつき・企画案', consult: 'みんなに聞きたいこと' }[k]}</small></span></button>`;
+  sheet('新しく作る', `<div class="pickgrid">${['notice', 'report', 'todo', 'idea', 'consult'].map(opt).join('')}
+    <button data-act="newsem" style="grid-column:1/-1"><span class="ic" style="background:#0891b222">🗓</span><span><b>セミナー</b><small>日時・場所・機材・案内・参加者まで管理</small></span></button></div>`);
+}
+
+/* ---------- item form ---------- */
+function sheetItemForm(kind, item) {
+  const it = item || { kind, title: '', body: '', priority: 'normal', assignee: '', due_date: '', idea_stage: 'seed', pinned: kind === 'notice', needs_ack: kind === 'notice' };
+  const K = KIND[kind];
+  let f = `<input type="hidden" id="f_id" value="${item ? item.id : ''}"><input type="hidden" id="f_kind" value="${kind}">
+    <div class="field"><label>${kind === 'report' ? 'ひとこと見出し' : 'タイトル'}${kind === 'report' ? '<span class="hint">なくてもOK</span>' : ''}</label>
+      <input type="text" id="f_title" value="${esc(it.title)}" placeholder="${{ notice: '例：来週の部会は火曜に変更', report: '', todo: '例：エコー機を予約する', idea: '例：1年生向けの体験会をやる', consult: '例：懇親会の会費どうする？' }[kind]}"></div>
+    <div class="field"><label>内容</label><textarea id="f_body" placeholder="${{ notice: '全員に知っておいてほしいことを書いてください', report: '報告したいことを自由に', todo: '補足があれば', idea: 'どんな企画か、ざっくりでOK', consult: '状況と、聞きたいことを書いてください' }[kind]}">${esc(it.body)}</textarea></div>`;
+
+  if (kind === 'todo') f += `<div class="field"><label>担当</label>${memberPicker(it.assignee, 'f_assignee')}<input type="hidden" id="f_assignee" value="${esc(it.assignee)}"></div>
+    <div class="row2"><div class="field"><label>期限</label><input type="date" id="f_due" value="${esc(it.due_date || '')}"></div>
+    <div class="field"><label>緊急度</label><select id="f_pri">${Object.entries(PRI).map(([k, v]) => `<option value="${k}" ${it.priority === k ? 'selected' : ''}>${v.t}</option>`).join('')}</select></div></div>`;
+  else if (kind === 'idea') f += `<div class="field"><label>いまの段階</label><div class="pickrow" id="f_stagerow">
+      ${Object.entries(STAGE).map(([k, v]) => `<button class="pick ${(it.idea_stage || 'seed') === k ? 'on' : ''}" data-act="f_stage" data-n="${k}">${v.t}</button>`).join('')}</div>
+      <input type="hidden" id="f_stage" value="${esc(it.idea_stage || 'seed')}"></div>`;
+  else f += `<div class="row2"><div class="field"><label>${kind === 'notice' ? '確認してほしい期限' : '期限'}<span class="hint">任意</span></label><input type="date" id="f_due" value="${esc(it.due_date || '')}"></div>
+    <div class="field"><label>緊急度</label><select id="f_pri">${Object.entries(PRI).map(([k, v]) => `<option value="${k}" ${it.priority === k ? 'selected' : ''}>${v.t}</option>`).join('')}</select></div></div>`;
+
+  f += `<div class="field"><label>ホーム表示</label><div class="pickrow">
+      <button class="pick ${it.pinned ? 'on' : ''}" data-act="f_pin" id="f_pinbtn">📌 ホームの「確認してほしいこと」に出す</button>
+      <button class="pick ${it.needs_ack ? 'on' : ''}" data-act="f_ack" id="f_ackbtn">✓ 全員に確認ボタンを押してもらう</button></div>
+      <input type="hidden" id="f_pin" value="${it.pinned ? 1 : ''}"><input type="hidden" id="f_needsack" value="${it.needs_ack ? 1 : ''}"></div>`;
+
+  sheet(`${K.ic} ${item ? K.t + 'を編集' : K.t + 'を書く'}`, f,
+    `<button class="btn" data-act="close">やめる</button><button class="btn pri" data-act="saveitem">${item ? '保存する' : '投稿する'}</button>`);
+}
+
+/* ---------- item detail ---------- */
+function sheetItem(id) {
+  const it = S.items.find(x => x.id === id); if (!it) return closeSheet();
+  const K = KIND[it.kind], ac = ackOf(id), cs = comOf(id);
+  let b = `<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+    <span class="chip" style="background:${K.c}18;color:${K.c}">${K.ic} ${K.t}</span>
+    ${it.kind === 'idea' ? `<span class="chip ${STAGE[it.idea_stage || 'seed'].c}">${STAGE[it.idea_stage || 'seed'].t}</span>` : ''}
+    ${it.priority !== 'normal' ? `<span class="chip ${PRI[it.priority].c}">緊急度：${PRI[it.priority].t}</span>` : ''}
+    ${it.pinned ? '<span class="chip red">📌 ホーム表示中</span>' : ''}
+    ${it.status === 'done' ? '<span class="chip green">✓ 完了</span>' : ''}</div>`;
+  if (it.title) b += `<h2 style="font-size:19px;letter-spacing:-.02em;margin-bottom:8px">${esc(it.title)}</h2>`;
+  if (it.body) b += `<div style="font-size:14.5px;color:var(--ink2);white-space:pre-wrap;word-break:break-word;margin-bottom:14px">${nl(it.body)}</div>`;
+  b += `<div style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);margin-bottom:16px">
+    ${av(it.author, 'sm')}${esc(it.author || '不明')} · ${relTime(it.created_at)}</div>`;
+
+  if (it.kind === 'todo') {
+    const dl = dueLabel(it.due_date);
+    b += `<div class="card" style="padding:4px 14px;margin-bottom:16px">
+      <div class="kv"><span class="k">担当</span><span class="v">${it.assignee ? esc(it.assignee) : '未定'}</span></div>
+      <div class="kv"><span class="k">期限</span><span class="v">${it.due_date ? fmtDate(it.due_date) + (dl ? ` <span class="chip ${dl.c}">${dl.t}</span>` : '') : '未設定'}</span></div></div>
+      <button class="btn ${it.status === 'done' ? '' : 'pri'} full" style="margin-bottom:10px" data-act="toggle" data-id="${id}">${it.status === 'done' ? '未完了にもどす' : '✓ 完了にする'}</button>
+      <div class="field"><label>担当をすぐ変える</label>${memberPicker(it.assignee, 'quickassign')}</div>`;
+  }
+  if (it.kind === 'idea') {
+    b += `<div class="field"><label>段階を変える</label><div class="pickrow">
+      ${Object.entries(STAGE).map(([k, v]) => `<button class="pick ${(it.idea_stage || 'seed') === k ? 'on' : ''}" data-act="setstage" data-id="${id}" data-n="${k}">${v.t}</button>`).join('')}</div></div>
+      <button class="btn full" data-act="like" data-id="${id}">${ic('like')} いいね ${it.likes || 0}</button>`;
+  }
+  if (it.needs_ack) {
+    const yet = S.members.filter(m => !ac.some(a => a.member === m.name));
+    b += `<div class="card" style="padding:13px 14px;margin-bottom:14px">
+      <div style="font-size:12.5px;font-weight:700;color:var(--ink2);margin-bottom:8px">確認状況 ${ac.length}/${S.members.length}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        ${ac.map(a => `<span class="chip green">✓ ${esc(a.member)}</span>`).join('')}
+        ${yet.map(m => `<span class="chip gray">${esc(m.name)}</span>`).join('')}</div>
+      ${ac.some(a => a.member === S.me) ? '' : `<button class="btn pri full sm" style="margin-top:12px" data-act="ack" data-id="${id}">確認しました</button>`}</div>`;
+  }
+  if (it.kind === 'consult') {
+    b += `<button class="btn ${it.status === 'done' ? '' : 'pri'} full" style="margin-bottom:14px" data-act="toggle" data-id="${id}">${it.status === 'done' ? '未解決にもどす' : '✓ 解決済みにする'}</button>`;
+  }
+  if (it.kind === 'consult' || it.kind === 'notice' || it.kind === 'idea') {
+    b += `<div class="sect-h" style="margin-top:18px"><h2>返信 ${cs.length}</h2></div>
+      <div style="display:flex;flex-direction:column;gap:9px;margin-bottom:12px">
+      ${cs.map(c => `<div class="post" style="box-shadow:none"><div class="ph">${av(c.author, 'sm')}<b>${esc(c.author)}</b><time>${relTime(c.created_at)}</time></div><div class="pb">${nl(c.body)}</div></div>`).join('') || '<p style="color:var(--muted);font-size:13px">まだ返信はありません</p>'}</div>
+      <div class="postbox" style="margin-bottom:4px"><textarea id="cmt" placeholder="返信を書く" style="min-height:56px"></textarea>
+      <div class="pf"><div class="who">${av(S.me, 'sm')}${esc(S.me)}</div>
+      <button class="btn pri sm" data-act="addcomment" data-id="${id}">${ic('send')} 送信</button></div></div>`;
+  }
+  b += `<div style="display:flex;gap:9px;margin-top:20px">
+    <button class="btn sm" data-act="edititem" data-id="${id}">${ic('edit')} 編集</button>
+    <button class="btn sm" data-act="pin" data-id="${id}">${ic('pin')} ${it.pinned ? 'ホームから外す' : 'ホームに出す'}</button>
+    <button class="btn dang sm" style="margin-left:auto" data-act="delitem" data-id="${id}">${ic('trash')}</button></div>`;
+  sheet(K.t, b);
+}
+
+/* ---------- seminar form ---------- */
+function sheetSemForm(sem) {
+  const s = sem || { title: '', event_date: '', start_time: '', end_time: '', lecturer: '', venue: '', equipment: '', facilitator: '', capacity: 0, notes: '' };
+  sheet(sem ? 'セミナーを編集' : 'セミナーを登録', `
+    <input type="hidden" id="s_id" value="${sem ? sem.id : ''}">
+    <div class="field"><label>セミナー名</label><input type="text" id="s_title" value="${esc(s.title)}" placeholder="例：FAST 基礎ハンズオン"></div>
+    <div class="field"><label>日付</label><input type="date" id="s_date" value="${esc(s.event_date || '')}"></div>
+    <div class="row2"><div class="field"><label>開始</label><input type="time" id="s_st" value="${esc(s.start_time)}"></div>
+      <div class="field"><label>終了</label><input type="time" id="s_et" value="${esc(s.end_time)}"></div></div>
+    <div class="field"><label>担当の先生</label><input type="text" id="s_lec" value="${esc(s.lecturer)}" placeholder="例：〇〇先生"></div>
+    <div class="field"><label>場所</label><input type="text" id="s_venue" value="${esc(s.venue)}" placeholder="例：臨床技能研修センター"></div>
+    <div class="field"><label>必要機材</label><textarea id="s_eq" style="min-height:64px" placeholder="例：エコー4台、ゼリー、シミュレータ、延長コード">${esc(s.equipment)}</textarea></div>
+    <div class="field"><label>ファシリ担当</label>${memberPicker(s.facilitator, 's_facil')}<input type="hidden" id="s_facil" value="${esc(s.facilitator)}"></div>
+    <div class="field"><label>その他（自由記述）</label><textarea id="s_notes" style="min-height:70px" placeholder="持ち物、当日の流れ、注意点など">${esc(s.notes)}</textarea></div>`,
+    `<button class="btn" data-act="close">やめる</button><button class="btn pri" data-act="savesem">${sem ? '保存する' : '登録する'}</button>`);
+}
+
+/* ---------- seminar detail ---------- */
+function sheetSem(id) {
+  const s = S.seminars.find(x => x.id === id); if (!s) return closeSheet();
+  const p = semProgress(s), pct = Math.round(p.done / p.total * 100);
+  const d = dparse(s.event_date);
+  let b = `<div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:14px">
+    <div class="datebox">${d ? `<div class="m">${d.getMonth() + 1}月</div><div class="d">${d.getDate()}</div><div class="w">${WD[d.getDay()]}</div>` : `<div class="d">?</div><div class="w">未定</div>`}</div>
+    <div style="flex:1;min-width:0"><h2 style="font-size:18px;letter-spacing:-.02em">${esc(s.title || '（無題）')}</h2>
+      <div class="smeta">${s.start_time ? `<span>🕐 ${esc(s.start_time)}${s.end_time ? '〜' + esc(s.end_time) : ''}</span>` : ''}${s.lecturer ? `<span>👨‍⚕️ ${esc(s.lecturer)}</span>` : ''}</div></div></div>
+    <div class="bar"><i class="${pct >= 100 ? '' : pct >= 50 ? 'mid' : 'low'}" style="width:${pct}%"></i></div>
+    <div class="barlab" style="margin-bottom:14px"><span>準備 ${p.done}/${p.total} 完了</span><span>${pct}%</span></div>
+
+    <div class="sect-h"><h2>準備チェック</h2></div>
+    <div class="card" style="padding:2px 14px;margin-bottom:18px"><div class="checklist">
+    ${SEM_CHECKS.map(c => `<button class="ckrow" data-act="semcheck" data-id="${id}" data-k="${c.k}">
+        <span class="check ${s[c.k] ? 'on' : ''}">${ic('check', 3.2)}</span>
+        <span class="lab"><b>${c.t}</b><small>${esc(c.s(s))}</small></span></button>`).join('')}
+      <div class="ckrow" style="cursor:default">
+        <span class="check ${s.facilitator ? 'on' : ''}">${ic('check', 3.2)}</span>
+        <span class="lab"><b>ファシリ担当</b><small>${s.facilitator ? esc(s.facilitator) : '未定'}</small></span></div>
+    </div></div>
+
+    <div class="field"><label>ファシリを決める</label>${memberPicker(s.facilitator, 'semfacil')}<input type="hidden" data-semid="${id}"></div>
+
+    <div class="sect-h"><h2>内容</h2></div>
+    <div class="card" style="padding:4px 14px;margin-bottom:18px">
+      <div class="kv"><span class="k">場所</span><span class="v">${esc(s.venue || '未定')}</span></div>
+      <div class="kv"><span class="k">必要機材</span><span class="v">${esc(s.equipment || '未記入')}</span></div>
+      <div class="kv"><span class="k">その他</span><span class="v">${esc(s.notes || '—')}</span></div></div>
+
+    <div style="display:flex;gap:9px;margin-top:18px">
+      <button class="btn sm" data-act="editsem" data-id="${id}">${ic('edit')} 編集</button>
+      <button class="btn sm" data-act="semdone" data-id="${id}">${s.status === 'done' ? '実施前にもどす' : '実施済みにする'}</button>
+      <button class="btn dang sm" style="margin-left:auto" data-act="delsem" data-id="${id}">${ic('trash')}</button></div>`;
+  sheet('セミナー', b);
+}
+</script>
+<script>
+/* ================= actions ================= */
+function pickSet(btn, hiddenId, val) {
+  btn.parentElement.querySelectorAll('.pick').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  const h = document.getElementById(hiddenId); if (h) h.value = val;
+}
+async function saveItem() {
+  const id = $('#f_id').value, kind = $('#f_kind').value;
+  const g = s => { const el = document.getElementById(s); return el ? el.value : ''; };
+  const row = {
+    kind,
+    title: g('f_title').trim(),
+    body: g('f_body').trim(),
+    priority: g('f_pri') || 'normal',
+    assignee: g('f_assignee') || '',
+    due_date: g('f_due') || null,
+    idea_stage: g('f_stage') || 'seed',
+    pinned: !!g('f_pin'),
+    needs_ack: !!g('f_needsack'),
+    updated_at: new Date().toISOString()
+  };
+  if (!row.title && !row.body) return toast('内容を書いてください');
+  if (id) { replaceIn(S.items, await upd('kpics_items', id, row)); }
+  else { row.author = S.me || '不明'; S.items.unshift(await ins('kpics_items', row)); }
+  closeSheet(); render(); toast('保存しました');
+}
+async function saveSem() {
+  const id = $('#s_id').value;
+  const g = s => { const el = document.getElementById(s); return el ? el.value : ''; };
+  const row = {
+    title: g('s_title').trim(), event_date: g('s_date') || null,
+    start_time: g('s_st'), end_time: g('s_et'), lecturer: g('s_lec').trim(),
+    venue: g('s_venue').trim(), equipment: g('s_eq').trim(), facilitator: g('s_facil'),
+    notes: g('s_notes').trim(),
+    updated_at: new Date().toISOString()
+  };
+  if (!row.title) return toast('セミナー名を入れてください');
+  let saved;
+  if (id) { saved = await upd('kpics_seminars', id, row); replaceIn(S.seminars, saved); }
+  else { saved = await ins('kpics_seminars', row); S.seminars.push(saved); }
+  S.seminars.sort((a, b) => (a.event_date || '9999').localeCompare(b.event_date || '9999'));
+  closeSheet(); render(); toast('保存しました');
+  openSheetFor({ type: 'sem', id: saved.id });
+}
+
+document.addEventListener('click', async (e) => {
+  const sc = e.target.closest('.scrim');
+  if (sc && !e.target.closest('.sheet')) return closeSheet();
+  const t = e.target.closest('[data-act]'); if (!t) return;
+  const a = t.dataset.act, id = t.dataset.id, k = t.dataset.k, n = t.dataset.n;
+  try {
+    switch (a) {
+      case 'nav': S.view = k; closeSheet(); render(); window.scrollTo(0, 0); break;
+      case 'board': S.board = k; render(); break;
+      case 'semtab': S.semTab = k; render(); break;
+      case 'todosort': S.todoSort = k; render(); break;
+      case 'tododone': S.todoDone = !S.todoDone; render(); break;
+      case 'reload': toast('更新しています…'); await loadAll(true); toast('最新にしました'); break;
+      case 'close': closeSheet(); break;
+      case 'new': sheetNew(); break;
+      case 'newkind': sheetItemForm(k); break;
+      case 'newsem': sheetSemForm(null); break;
+
+      case 'item': openSheetFor({ type: 'item', id }); break;
+      case 'sem': openSheetFor({ type: 'sem', id }); break;
+
+      case 'toggle': {
+        const it = S.items.find(x => x.id === id);
+        replaceIn(S.items, await upd('kpics_items', id, { status: it.status === 'done' ? 'open' : 'done', updated_at: new Date().toISOString() }));
+        render(); refreshSheet(); break;
+      }
+      case 'ack': {
+        if (!S.me) { toast('先に自分の名前を選んでください'); S.view = 'set'; render(); break; }
+        if (!ackOf(id).some(x => x.member === S.me)) {
+          S.acks.push(await ins('kpics_acks', { item_id: id, member: S.me }));
+        }
+        render(); refreshSheet(); toast('確認しました'); break;
+      }
+      case 'like': {
+        const it = S.items.find(x => x.id === id);
+        replaceIn(S.items, await upd('kpics_items', id, { likes: (it.likes || 0) + 1 }));
+        render(); refreshSheet(); break;
+      }
+      case 'pin': {
+        const it = S.items.find(x => x.id === id);
+        replaceIn(S.items, await upd('kpics_items', id, { pinned: !it.pinned }));
+        render(); refreshSheet(); toast(it.pinned ? 'ホームから外しました' : 'ホームに出しました'); break;
+      }
+      case 'setstage': {
+        replaceIn(S.items, await upd('kpics_items', id, { idea_stage: n })); render(); refreshSheet(); break;
+      }
+      case 'quickassign': {
+        replaceIn(S.items, await upd('kpics_items', sheetCtx.id, { assignee: n })); render(); refreshSheet(); break;
+      }
+      case 'edititem': sheetItemForm(S.items.find(x => x.id === id).kind, S.items.find(x => x.id === id)); break;
+      case 'saveitem': await saveItem(); break;
+      case 'delitem': {
+        if (!confirm('この投稿を削除します。よろしいですか？')) break;
+        await del('kpics_items', id); S.items = S.items.filter(x => x.id !== id);
+        closeSheet(); render(); toast('削除しました'); break;
+      }
+      case 'addcomment': {
+        const el = $('#cmt'), body = el.value.trim(); if (!body) break;
+        S.comments.push(await ins('kpics_comments', { item_id: id, author: S.me || '不明', body }));
+        refreshSheet(); render(); break;
+      }
+      case 'quickpost': {
+        const el = $('#quick'), body = el.value.trim(); if (!body) return toast('内容を書いてください');
+        S.items.unshift(await ins('kpics_items', { kind: 'report', body, author: S.me || '不明', pinned: quickPin, needs_ack: quickPin }));
+        quickPin = false; render(); toast('投稿しました'); break;
+      }
+      case 'quickpin': quickPin = !quickPin; t.classList.toggle('pri', quickPin); toast(quickPin ? 'ホームにも出します' : 'ホームには出しません'); break;
+
+      case 'semcheck': {
+        const s = S.seminars.find(x => x.id === id);
+        replaceIn(S.seminars, await upd('kpics_seminars', id, { [k]: !s[k], updated_at: new Date().toISOString() }));
+        render(); refreshSheet(); break;
+      }
+      case 'semfacil': {
+        replaceIn(S.seminars, await upd('kpics_seminars', sheetCtx.id, { facilitator: n })); render(); refreshSheet(); break;
+      }
+      case 'editsem': sheetSemForm(S.seminars.find(x => x.id === id)); break;
+      case 'savesem': await saveSem(); break;
+      case 'semdone': {
+        const s = S.seminars.find(x => x.id === id);
+        replaceIn(S.seminars, await upd('kpics_seminars', id, { status: s.status === 'done' ? 'planning' : 'done' }));
+        render(); refreshSheet(); break;
+      }
+      case 'delsem': {
+        if (!confirm('このセミナーを削除します。よろしいですか？')) break;
+        await del('kpics_seminars', id); S.seminars = S.seminars.filter(x => x.id !== id);
+        closeSheet(); render(); toast('削除しました'); break;
+      }
+
+      case 'whoami': {
+        sheet('自分は誰ですか？', `<p style="font-size:13px;color:var(--muted);margin:0 0 14px">投稿者名と「確認しました」の記録に使います。</p>
+          <div class="pickrow">${S.members.map(m => `<button class="pick ${S.me === m.name ? 'on' : ''}" data-act="setme" data-n="${esc(m.name)}">${esc(m.name)}</button>`).join('') || '<span style="color:var(--muted);font-size:13px">メンバーがいません</span>'}</div>
+          <button class="btn full" style="margin-top:16px" data-act="newmember">＋ メンバーを追加</button>`);
+        break;
+      }
+      case 'setme': S.me = n; localStorage.setItem(MEK, n); closeSheet(); render(); toast(`${n} さんとして使います`); break;
+      case 'newmember': {
+        sheet('メンバーを追加', `<div class="field"><label>名前</label><input type="text" id="m_name" placeholder="例：山田"></div>
+          <div class="field"><label>役職<span class="hint">任意</span></label><input type="text" id="m_role" placeholder="例：代表・会計・広報"></div>
+          <div class="field"><label>色</label><div class="pickrow" id="m_colors">${PAL.map((c, i) => `<button class="pick ${i === 0 ? 'on' : ''}" data-act="m_color" data-n="${c}" style="background:${c};color:#fff;border-color:${c};width:44px">　</button>`).join('')}</div>
+          <input type="hidden" id="m_color" value="${PAL[0]}"></div>`,
+          `<button class="btn" data-act="close">やめる</button><button class="btn pri" data-act="savemember">追加する</button>`);
+        break;
+      }
+      case 'm_color': pickSet(t, 'm_color', n); break;
+      case 'savemember': {
+        const nm = $('#m_name').value.trim(); if (!nm) return toast('名前を入れてください');
+        S.members.push(await ins('kpics_members', { name: nm, role: $('#m_role').value.trim(), color: $('#m_color').value, sort_order: S.members.length + 1 }));
+        if (!S.me) { S.me = nm; localStorage.setItem(MEK, nm); }
+        closeSheet(); render(); toast('追加しました'); break;
+      }
+      case 'delmember': {
+        const m = S.members.find(x => x.id === id);
+        if (!confirm(`${m.name} をメンバーから外します。投稿はそのまま残ります。`)) break;
+        await del('kpics_members', id); S.members = S.members.filter(x => x.id !== id);
+        render(); toast('削除しました'); break;
+      }
+
+      case 'f_assignee': pickSet(t, 'f_assignee', n); break;
+      case 'f_stage': pickSet(t, 'f_stage', n); break;
+      case 's_facil': pickSet(t, 's_facil', n); break;
+      case 'f_pin': { const h = $('#f_pin'); h.value = h.value ? '' : '1'; t.classList.toggle('on', !!h.value); break; }
+      case 'f_ack': { const h = $('#f_needsack'); h.value = h.value ? '' : '1'; t.classList.toggle('on', !!h.value); if (h.value) { $('#f_pin').value = '1'; $('#f_pinbtn').classList.add('on'); } break; }
+
+      case 'savecfg': {
+        const url = $('#cfgurl').value.trim().replace(/\/+$/, ''), key = $('#cfgkey').value.trim();
+        if (!/^https:\/\/.+/.test(url) || key.length < 30) { $('#setuperr').innerHTML = '<div class="err">URL とキーをもう一度確認してください。</div>'; break; }
+        localStorage.setItem(CFGK, JSON.stringify({ url, key }));
+        S.cfg = { url, key }; sb = window.supabase.createClient(url, key);
+        await loadAll(); break;
+      }
+      case 'resetcfg': {
+        if (!confirm('接続設定を消して、最初の画面にもどります。')) break;
+        localStorage.removeItem(CFGK); S.cfg = null; sb = null; render(); break;
+      }
+    }
+  } catch (err) { console.error(err); }
+});
+
+/* ================= init ================= */
+(function init() {
+  let cfg = null;
+  if (HARDCODED.url && HARDCODED.key) cfg = { url: HARDCODED.url, key: HARDCODED.key };
+  else { try { cfg = JSON.parse(localStorage.getItem(CFGK) || 'null'); } catch (e) { } }
+  S.cfg = cfg;
+  if (!cfg) { render(); return; }
+  sb = window.supabase.createClient(cfg.url, cfg.key);
+  loadAll();
+  setInterval(() => {
+    if ($('#layer .scrim')) return;
+    const ae = document.activeElement;
+    if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA')) return;
+    const q = $('#quick'); if (q && q.value.trim()) return;
+    if (document.hidden) return;
+    loadAll(true);
+  }, 60000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && S.cfg && !$('#layer .scrim')) loadAll(true); });
+})();
+</script>
+</body>
 </html>
