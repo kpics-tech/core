@@ -491,9 +491,18 @@ const SEM_CHECKS = [
   { k: 'announced', t: '案内', s: it => it.announced ? '案内済み' : 'まだ案内していない' },
   { k: 'calendar_added', t: 'K-PICSカレンダー', s: it => it.calendar_added ? '登録済み' : '未登録' }
 ];
+/* その他ToDo（セミナーごとに自由に足せるチェック項目） */
+function semExtras(s) {
+  let v = s && s.custom_checks;
+  if (!v) return [];
+  if (typeof v === 'string') { try { v = JSON.parse(v); } catch (e) { return []; } }
+  if (!Array.isArray(v)) return [];
+  return v.filter(x => x && x.t).map(x => ({ t: String(x.t), done: !!x.done }));
+}
 function semProgress(s) {
-  const done = SEM_CHECKS.filter(c => s[c.k]).length + (s.facilitator ? 1 : 0);
-  return { done, total: SEM_CHECKS.length + 1 };
+  const ex = semExtras(s);
+  const done = SEM_CHECKS.filter(c => s[c.k]).length + (s.facilitator ? 1 : 0) + ex.filter(x => x.done).length;
+  return { done, total: SEM_CHECKS.length + 1 + ex.length };
 }
 function semTodoCount(s) { const p = semProgress(s); return p.total - p.done; }
 </script>
@@ -601,7 +610,7 @@ function semRow(s) {
       ${dl !== null && dl >= 0 && dl <= 14 && p.done < p.total ? `<span class="chip ${dl <= 3 ? 'red' : 'org'}">残${p.total - p.done}件</span>` : ''}
     </div>
     <div class="bar"><i class="${pct >= 100 ? '' : pct >= 50 ? 'mid' : 'low'}" style="width:${pct}%"></i></div>
-    <div class="barlab"><span>準備 ${p.done}/${p.total}</span><span>${pct >= 100 ? '準備OK 🎉' : SEM_CHECKS.filter(c => !s[c.k]).map(c => c.t).concat(s.facilitator ? [] : ['ファシリ']).slice(0, 2).join('・') + ' が未完了'}</span></div>
+    <div class="barlab"><span>準備 ${p.done}/${p.total}</span><span>${pct >= 100 ? '準備OK 🎉' : SEM_CHECKS.filter(c => !s[c.k]).map(c => c.t).concat(s.facilitator ? [] : ['ファシリ']).concat(semExtras(s).filter(x => !x.done).map(x => x.t)).slice(0, 2).join('・') + ' が未完了'}</span></div>
   </div>`;
 }
 function sectionHead(t, n, more) {
@@ -796,7 +805,7 @@ function closeSheet() {
   sheetCtx = null;
   const l = $('#layer'); const s = l.querySelector('.scrim');
   if (!s) { l.innerHTML = ''; return; }
-  s.classList.remove('show'); setTimeout(() => { l.innerHTML = ''; }, 180);
+  s.classList.remove('show'); setTimeout(() => { if (l.querySelector('.scrim') === s) l.innerHTML = ''; }, 180);
 }
 function sheet(title, body, foot) {
   $('#layer').innerHTML = `<div class="scrim"><div class="sheet"><div class="grab"></div>
@@ -917,7 +926,9 @@ function sheetSemForm(sem) {
     <div class="field"><label>担当の先生</label><input type="text" id="s_lec" value="${esc(s.lecturer)}" placeholder="例：〇〇先生"></div>
     <div class="field"><label>場所</label><input type="text" id="s_venue" value="${esc(s.venue)}" placeholder="例：臨床技能研修センター"></div>
     <div class="field"><label>必要機材</label><textarea id="s_eq" style="min-height:64px" placeholder="例：エコー4台、ゼリー、シミュレータ、延長コード">${esc(s.equipment)}</textarea></div>
-    <div class="field"><label>ファシリ担当</label>${memberPicker(s.facilitator, 's_facil')}<input type="hidden" id="s_facil" value="${esc(s.facilitator)}"></div>
+    <div class="field"><label>ファシリ担当<span class="hint">自由に書けます</span></label><input type="text" id="s_facil" value="${esc(s.facilitator)}" placeholder="例：山田・田中／1年生チーム"></div>
+    <div class="field"><label>その他のToDo<span class="hint">1行に1つ。チェックリストに追加されます</span></label>
+      <textarea id="s_extras" style="min-height:74px" placeholder="例：\n参加者アンケートを作る\nゼリーを補充する">${esc(semExtras(s).map(x => x.t).join('\n'))}</textarea></div>
     <div class="field"><label>その他（自由記述）</label><textarea id="s_notes" style="min-height:70px" placeholder="持ち物、当日の流れ、注意点など">${esc(s.notes)}</textarea></div>`,
     `<button class="btn" data-act="close">やめる</button><button class="btn pri" data-act="savesem">${sem ? '保存する' : '登録する'}</button>`);
 }
@@ -926,7 +937,7 @@ function sheetSemForm(sem) {
 function sheetSem(id) {
   const s = S.seminars.find(x => x.id === id); if (!s) return closeSheet();
   const p = semProgress(s), pct = Math.round(p.done / p.total * 100);
-  const d = dparse(s.event_date);
+  const d = dparse(s.event_date), ex = semExtras(s);
   let b = `<div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:14px">
     <div class="datebox">${d ? `<div class="m">${d.getMonth() + 1}月</div><div class="d">${d.getDate()}</div><div class="w">${WD[d.getDay()]}</div>` : `<div class="d">?</div><div class="w">未定</div>`}</div>
     <div style="flex:1;min-width:0"><h2 style="font-size:18px;letter-spacing:-.02em">${esc(s.title || '（無題）')}</h2>
@@ -942,9 +953,21 @@ function sheetSem(id) {
       <div class="ckrow" style="cursor:default">
         <span class="check ${s.facilitator ? 'on' : ''}">${ic('check', 3.2)}</span>
         <span class="lab"><b>ファシリ担当</b><small>${s.facilitator ? esc(s.facilitator) : '未定'}</small></span></div>
+    ${ex.map((x, i) => `<div class="ckrow">
+        <button class="check ${x.done ? 'on' : ''}" data-act="semextoggle" data-id="${id}" data-i="${i}">${ic('check', 3.2)}</button>
+        <span class="lab" style="cursor:default"><b>${esc(x.t)}</b><small>その他のToDo</small></span>
+        <button class="iconbtn" style="width:30px;height:30px;border:none;background:transparent;color:var(--muted)" data-act="semexdel" data-id="${id}" data-i="${i}">${ic('x')}</button></div>`).join('')}
     </div></div>
 
-    <div class="field"><label>ファシリを決める</label>${memberPicker(s.facilitator, 'semfacil')}<input type="hidden" data-semid="${id}"></div>
+    <div class="field"><label>その他のToDoを追加<span class="hint">チェックリストに並びます</span></label>
+      <div style="display:flex;gap:8px">
+        <input type="text" id="s_newcheck" placeholder="例：参加者アンケートを作る" style="flex:1">
+        <button class="btn pri" data-act="semexadd" data-id="${id}">追加</button></div></div>
+
+    <div class="field"><label>ファシリ担当<span class="hint">自由に書けます</span></label>
+      <div style="display:flex;gap:8px">
+        <input type="text" id="s_facilinput" value="${esc(s.facilitator || '')}" placeholder="例：山田・田中／1年生チーム" style="flex:1">
+        <button class="btn" data-act="semfacilsave" data-id="${id}">保存</button></div></div>
 
     <div class="sect-h"><h2>内容</h2></div>
     <div class="card" style="padding:4px 14px;margin-bottom:18px">
@@ -986,20 +1009,48 @@ async function saveItem() {
   else { row.author = S.me || '不明'; S.items.unshift(await ins('kpics_items', row)); }
   closeSheet(); render(); toast('保存しました');
 }
+/* Supabase にまだ custom_checks 列が無い場合でも、他の項目は保存できるようにする */
+let noCustomCol = false;
+const isNoCol = e => /custom_checks/i.test((e && (e.message || e.details || e.hint)) || '');
+function stripCC(row) { const r = Object.assign({}, row); delete r.custom_checks; return r; }
+async function updSem(id, patch) {
+  if (noCustomCol) patch = stripCC(patch);
+  try { return await upd('kpics_seminars', id, patch); }
+  catch (e) {
+    if (!isNoCol(e)) throw e;
+    noCustomCol = true; toast('その他ToDoの保存には custom_checks 列の追加が必要です');
+    return await upd('kpics_seminars', id, stripCC(patch));
+  }
+}
+async function insSem(row) {
+  if (noCustomCol) row = stripCC(row);
+  try { return await ins('kpics_seminars', row); }
+  catch (e) {
+    if (!isNoCol(e)) throw e;
+    noCustomCol = true; toast('その他ToDoの保存には custom_checks 列の追加が必要です');
+    return await ins('kpics_seminars', stripCC(row));
+  }
+}
 async function saveSem() {
   const id = $('#s_id').value;
   const g = s => { const el = document.getElementById(s); return el ? el.value : ''; };
   const row = {
     title: g('s_title').trim(), event_date: g('s_date') || null,
     start_time: g('s_st'), end_time: g('s_et'), lecturer: g('s_lec').trim(),
-    venue: g('s_venue').trim(), equipment: g('s_eq').trim(), facilitator: g('s_facil'),
+    venue: g('s_venue').trim(), equipment: g('s_eq').trim(), facilitator: g('s_facil').trim(),
     notes: g('s_notes').trim(),
     updated_at: new Date().toISOString()
   };
   if (!row.title) return toast('セミナー名を入れてください');
+  /* その他ToDo：1行1つ。すでにあるものはチェック状態を引きつぐ */
+  const before = semExtras(S.seminars.find(x => x.id === id) || {});
+  const lines = g('s_extras').split('\n').map(x => x.trim()).filter(Boolean);
+  const seen = new Set();
+  row.custom_checks = lines.filter(t => !seen.has(t) && seen.add(t))
+    .map(t => ({ t, done: !!(before.find(b => b.t === t) || {}).done }));
   let saved;
-  if (id) { saved = await upd('kpics_seminars', id, row); replaceIn(S.seminars, saved); }
-  else { saved = await ins('kpics_seminars', row); S.seminars.push(saved); }
+  if (id) { saved = await updSem(id, row); replaceIn(S.seminars, saved); }
+  else { saved = await insSem(row); S.seminars.push(saved); }
   S.seminars.sort((a, b) => (a.event_date || '9999').localeCompare(b.event_date || '9999'));
   closeSheet(); render(); toast('保存しました');
   openSheetFor({ type: 'sem', id: saved.id });
@@ -1078,8 +1129,35 @@ document.addEventListener('click', async (e) => {
         replaceIn(S.seminars, await upd('kpics_seminars', id, { [k]: !s[k], updated_at: new Date().toISOString() }));
         render(); refreshSheet(); break;
       }
-      case 'semfacil': {
-        replaceIn(S.seminars, await upd('kpics_seminars', sheetCtx.id, { facilitator: n })); render(); refreshSheet(); break;
+      case 'semfacilsave': {
+        const v = ($('#s_facilinput') || {}).value || '';
+        replaceIn(S.seminars, await upd('kpics_seminars', id, { facilitator: v.trim(), updated_at: new Date().toISOString() }));
+        render(); refreshSheet(); toast('保存しました'); break;
+      }
+      case 'semexadd': {
+        const el = $('#s_newcheck'), v = (el ? el.value : '').trim();
+        if (!v) return toast('内容を書いてください');
+        const s = S.seminars.find(x => x.id === id);
+        const list = semExtras(s);
+        if (list.some(x => x.t === v)) return toast('同じToDoがすでにあります');
+        list.push({ t: v, done: false });
+        replaceIn(S.seminars, await updSem(id, { custom_checks: list, updated_at: new Date().toISOString() }));
+        render(); refreshSheet(); toast('追加しました'); break;
+      }
+      case 'semextoggle': {
+        const s = S.seminars.find(x => x.id === id), i = +t.dataset.i;
+        const list = semExtras(s); if (!list[i]) break;
+        list[i].done = !list[i].done;
+        replaceIn(S.seminars, await updSem(id, { custom_checks: list, updated_at: new Date().toISOString() }));
+        render(); refreshSheet(); break;
+      }
+      case 'semexdel': {
+        const s = S.seminars.find(x => x.id === id), i = +t.dataset.i;
+        const list = semExtras(s); if (!list[i]) break;
+        if (!confirm(`「${list[i].t}」をチェックリストから消します。よろしいですか？`)) break;
+        list.splice(i, 1);
+        replaceIn(S.seminars, await updSem(id, { custom_checks: list, updated_at: new Date().toISOString() }));
+        render(); refreshSheet(); toast('削除しました'); break;
       }
       case 'editsem': sheetSemForm(S.seminars.find(x => x.id === id)); break;
       case 'savesem': await saveSem(); break;
@@ -1125,7 +1203,6 @@ document.addEventListener('click', async (e) => {
 
       case 'f_assignee': pickSet(t, 'f_assignee', n); break;
       case 'f_stage': pickSet(t, 'f_stage', n); break;
-      case 's_facil': pickSet(t, 's_facil', n); break;
       case 'f_pin': { const h = $('#f_pin'); h.value = h.value ? '' : '1'; t.classList.toggle('on', !!h.value); break; }
       case 'f_ack': { const h = $('#f_needsack'); h.value = h.value ? '' : '1'; t.classList.toggle('on', !!h.value); if (h.value) { $('#f_pin').value = '1'; $('#f_pinbtn').classList.add('on'); } break; }
 
